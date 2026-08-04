@@ -273,7 +273,7 @@ const MODELS = { rifle:'rifle.glb', pistol:'pistol.glb', shotgun:'' };
 const SHOTGUN_MODELS = { pump:'sg-pump.glb', semi:'sg-semi.glb', boxmag:'sg-magfed.glb', double:'sg-pump.glb' };
 const MODEL_OPTS = {
   'rifle.glb':   { flip:true, hide:'scope|ammo' },
-  'pistol.glb':  { flip:true },
+  'pistol.glb':  { flip:true, yaw:-0.20 },
   'sg-pump.glb': { flip:true },
   'sg-semi.glb': {},
   'sg-magfed.glb': {}
@@ -281,7 +281,7 @@ const MODEL_OPTS = {
 const ANCH = {
   rifle: { optic:[-1.2,0.78], optic2:[0.7,0.78], ironsR:[-2.0,0.78], ironsF:[4.0,0.78], muzzle:[4.55,0.35],
            bipod:[2.2,-0.1], bag:[1.8,-0.1], light:[3.0,-0.1], laser:[3.5,-0.1] },
-  pistol: { slide:[-1.7,1.85], framemount:[2.6,0.5], muzzle:[4.85,1.3], ports:[3.8,1.9], rail:[3.0,0.5], grip:[-1.2,-2.95] },
+  pistol: { slide:[-1.7,1.85,0.08], framemount:[2.6,0.5,0.08], muzzle:[4.85,1.3,0.08], ports:[3.8,1.9,0.08], rail:[3.0,0.5,0.08], grip:[-1.2,-2.95,0.08] },
   sg: {
     pump:  { optic:[-0.9,0.85], muzzle:[4.85,0.55], tube:[2.35,0.16], tubelen:2.2, under:[1.3,-0.12], bipod:[1.7,-0.12] },
     semi:  { optic:[-0.8,0.62], muzzle:[4.9,0.42], tube:[2.2,0.05], tubelen:2.2, under:[2.0,-0.4], bipod:[2.4,-0.4] },
@@ -291,7 +291,7 @@ const ANCH = {
 };
 function accFor(w){
   const s = state[w], out = [];
-  const put = (kind, at, extra) => { if (at) out.push(Object.assign({kind, at:[at[0], at[1], 0]}, extra||{})); };
+  const put = (kind, at, extra) => { if (at) out.push(Object.assign({kind, at:[at[0], at[1], at[2]||0]}, extra||{})); };
   if (w === 'rifle'){
     const A = ANCH.rifle;
     if (s.optic==='dot') put('dot', A.optic);
@@ -308,7 +308,7 @@ function accFor(w){
     if (s.rail2==='laser') put('laser', A.laser);
   } else if (w === 'pistol'){
     const A = ANCH.pistol, sc = 1.8;
-    if (s.optic==='slidedot') put('slidedot', [A.slide[0], 1.7], {scale:sc});
+    if (s.optic==='slidedot') put('slidedot', [A.slide[0], 1.7, 0.08], {scale:sc});
     if (s.optic==='framemount') put('framemount', A.framemount, {scale:sc});
     if (s.muzzle==='comp') put('comp', A.muzzle, {scale:1.4});
     if (s.muzzle==='ported') put('ports', A.ports, {scale:sc});
