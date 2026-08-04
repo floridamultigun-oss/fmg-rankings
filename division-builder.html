@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Florida Multigun — Loadout Builder</title>
+<style>
+  :root{
+    --bg:#0a0f13; --panel:rgba(13,19,24,0.88); --panel2:rgba(20,28,34,0.92);
+    --line:#2c3840; --line2:#41505b;
+    --amber:#ff9a2e; --amber-dim:#8a5d1a;
+    --txt:#d9e0e6; --dim:#8b99a3; --faint:#59656e;
+    --ok:#5fd68b; --bad:#ff5c5c;
+    --font:'Bahnschrift','DIN Alternate','Franklin Gothic Medium','Arial Narrow',Arial,sans-serif;
+    --mono:'Consolas','Menlo','Courier New',monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--bg); color:var(--txt); font-family:var(--font);}
+  body{min-height:100vh; overflow-x:hidden;}
+  .clip{clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);}
+  .clip-sm{clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);}
+
+  /* ============ TOP BAR ============ */
+  header{
+    display:flex; align-items:center; gap:22px; flex-wrap:wrap;
+    padding:14px 28px; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(16,23,28,.95), rgba(10,15,19,.9));
+    position:relative; z-index:5;
+  }
+  header h1{font-size:20px; letter-spacing:3px; text-transform:uppercase; color:#fff; font-weight:700; white-space:nowrap;}
+  header h1 span{color:var(--amber);}
+  nav{display:flex; gap:4px;}
+  .tab{
+    background:transparent; border:1px solid transparent; color:var(--dim);
+    padding:9px 22px; cursor:pointer; font-family:var(--font);
+    font-size:14px; letter-spacing:3px; text-transform:uppercase; font-weight:700; transition:all .15s;
+  }
+  .tab:hover{color:var(--txt);}
+  .tab.active{color:var(--amber); border-color:var(--line2); background:rgba(255,154,46,.07); box-shadow:inset 0 -2px 0 var(--amber);}
+  .hdr-right{margin-left:auto; display:flex; gap:10px; align-items:center;}
+  .match-pill{background:var(--panel); border:1px solid var(--line); padding:6px 16px;}
+  .match-pill .l{font-size:9px; letter-spacing:2px; color:var(--dim); text-transform:uppercase;}
+  .match-pill .v{font-size:15px; font-weight:700; letter-spacing:1.5px; color:var(--amber); text-transform:uppercase;}
+  .flag{font-family:var(--mono); font-size:10px; letter-spacing:1px; padding:5px 10px; border:1px dashed var(--line2); color:var(--faint); text-transform:uppercase;}
+  .flag.on{border:1px solid var(--ok); color:var(--ok); background:rgba(95,214,139,.07);}
+
+  /* ============ STAGE ============ */
+  .screen{display:none;}
+  .screen.active{display:block;}
+  .stage{
+    position:relative; height:calc(100vh - 64px); min-height:640px; overflow:hidden;
+    background:
+      radial-gradient(ellipse 60% 45% at 50% 46%, rgba(140,180,200,0.17), transparent 70%),
+      radial-gradient(ellipse 90% 80% at 50% 50%, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%),
+      repeating-linear-gradient(90deg, #0e1519 0px, #121a1f 55px, #0c1216 110px, #10181d 165px, #0e1519 220px),
+      #0a0f13;
+  }
+  .stage::after{ /* floor glow */
+    content:''; position:absolute; left:15%; right:15%; top:68%; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(140,180,200,.12), transparent);
+  }
+  .wires{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;}
+  .wires line{stroke:rgba(215,225,232,.35); stroke-width:1;}
+  .wires circle{fill:#dfe6ec;}
+  .gun-wrap{
+    position:absolute; left:50%; top:47%; transform:translate(-50%,-50%);
+    width:min(62vw, 980px); z-index:1; pointer-events:none;
+  }
+  .gun-wrap svg{width:100%; height:auto; filter:drop-shadow(0 24px 30px rgba(0,0,0,.55));}
+  .gun-wrap .layer-img{position:absolute; inset:0; width:100%; height:auto;}
+  model-viewer{width:100%; height:520px; pointer-events:auto;}
+
+  /* attachment nodes */
+  .node{
+    position:absolute; transform:translate(-50%,-50%); z-index:3; width:120px;
+    cursor:pointer; text-align:center;
+  }
+  .node .n-lbl{
+    font-size:10px; letter-spacing:2px; color:var(--dim); text-transform:uppercase; margin-bottom:5px;
+    text-shadow:0 1px 3px #000;
+  }
+  .node.conflict .n-lbl{color:var(--amber);}
+  .node .n-box{
+    width:58px; height:58px; margin:0 auto; border:1px solid var(--line2);
+    background:linear-gradient(160deg, rgba(30,40,48,.92), rgba(12,17,21,.92));
+    display:flex; align-items:center; justify-content:center; transition:all .15s;
+    box-shadow:0 4px 14px rgba(0,0,0,.5);
+  }
+  .node:hover .n-box{border-color:var(--amber); box-shadow:0 0 14px rgba(255,154,46,.35);}
+  .node.sel .n-box{border-color:var(--amber); background:linear-gradient(160deg, rgba(70,52,24,.95), rgba(24,18,10,.95));}
+  .node .n-box svg{width:38px; height:38px;}
+  .node .n-cur{
+    font-family:var(--mono); font-size:9.5px; color:var(--txt); margin-top:5px; letter-spacing:.5px;
+    text-shadow:0 1px 3px #000; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+
+  /* left info block */
+  .info{
+    position:absolute; left:28px; top:26px; z-index:4; max-width:330px;
+  }
+  .info .w-name{font-size:44px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#fff; line-height:1; text-shadow:0 2px 10px #000;}
+  .info .w-div-lbl{font-size:10px; letter-spacing:3px; color:var(--dim); text-transform:uppercase; margin-top:14px;}
+  .info .w-div{
+    display:inline-block; margin-top:6px; padding:8px 18px;
+    border:1px solid var(--amber); color:var(--amber); font-size:20px; font-weight:700;
+    letter-spacing:2px; text-transform:uppercase; background:rgba(255,154,46,.08);
+    box-shadow:0 0 18px rgba(255,154,46,.15);
+  }
+  .info .g-flags{margin-top:10px; display:flex; gap:8px;}
+
+  /* stats / eligibility panel bottom-right */
+  .stats{
+    position:absolute; right:28px; bottom:26px; z-index:4; width:300px;
+    background:var(--panel); border:1px solid var(--line); padding:14px 16px;
+    backdrop-filter:blur(3px);
+  }
+  .stats h3{font-size:10px; letter-spacing:2.5px; color:var(--dim); text-transform:uppercase; margin-bottom:10px;}
+  .st-row{
+    display:flex; align-items:center; gap:10px; padding:7px 8px; cursor:pointer;
+    border:1px solid transparent; transition:border-color .15s;
+  }
+  .st-row:hover{border-color:var(--line2);}
+  .st-row .n{flex:1; font-size:13px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;}
+  .st-row .s{font-family:var(--mono); font-size:10px; letter-spacing:1px;}
+  .st-row.ok .n{color:var(--txt);} .st-row.ok .s{color:var(--ok);}
+  .st-row.bad .n{color:var(--faint); text-decoration:line-through;} .st-row.bad .s{color:var(--bad);}
+  .st-bar{height:3px; background:#1b232a; margin:2px 8px 8px; position:relative;}
+  .st-bar i{position:absolute; inset:0; right:auto; background:var(--ok);}
+  .st-row.bad + .st-bar i{background:var(--bad);}
+  .stats .actions{display:flex; gap:8px; margin-top:12px;}
+  button.act{
+    flex:1; background:var(--amber); color:#14100a; border:none; font-family:var(--font);
+    font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+    padding:10px 8px; cursor:pointer;
+  }
+  button.act:hover{background:#ffb054;}
+  button.act.ghost{background:transparent; color:var(--amber); border:1px solid var(--amber-dim);}
+  button.act.ghost:hover{border-color:var(--amber);}
+  .copied{font-family:var(--mono); font-size:10px; color:var(--ok); opacity:0; transition:opacity .3s; text-align:center; margin-top:6px;}
+  .copied.show{opacity:1;}
+
+  /* violations flyout */
+  .viol{
+    position:absolute; right:28px; bottom:260px; z-index:6; width:340px;
+    background:var(--panel2); border:1px solid rgba(255,92,92,.4); padding:14px 16px;
+  }
+  .viol h4{font-size:11px; letter-spacing:2px; color:var(--bad); text-transform:uppercase; margin-bottom:8px;}
+  .viol ul{list-style:none;}
+  .viol li{font-family:var(--mono); font-size:11.5px; color:var(--txt); border-left:2px solid var(--bad); padding:3px 0 3px 10px; margin:5px 0;}
+  .viol .allclear{font-family:var(--mono); font-size:11.5px; color:var(--ok);}
+  .viol .x{position:absolute; top:8px; right:10px; cursor:pointer; color:var(--dim); font-family:var(--mono);}
+  .viol .x:hover{color:#fff;}
+
+  /* attachment select flyout */
+  .flyout{
+    position:absolute; left:28px; bottom:26px; z-index:6; width:380px; max-height:66%;
+    background:var(--panel2); border:1px solid var(--line2); display:flex; flex-direction:column;
+    box-shadow:0 10px 40px rgba(0,0,0,.6); backdrop-filter:blur(4px);
+  }
+  .flyout .f-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 16px; border-bottom:1px solid var(--line);
+  }
+  .flyout .f-head .t{font-size:13px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--amber);}
+  .flyout .f-head .x{cursor:pointer; color:var(--dim); font-family:var(--mono); padding:2px 8px;}
+  .flyout .f-head .x:hover{color:#fff;}
+  .flyout .f-body{overflow-y:auto;}
+  .opt{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:11px 16px; cursor:pointer; border-bottom:1px solid rgba(44,56,64,.5); transition:background .12s;
+  }
+  .opt:hover{background:rgba(255,154,46,.06);}
+  .opt.sel{background:rgba(255,154,46,.12); box-shadow:inset 3px 0 0 var(--amber);}
+  .opt .o-name{font-size:13.5px; color:var(--txt);}
+  .opt .o-sub{font-family:var(--mono); font-size:10px; color:var(--faint); display:block; margin-top:2px;}
+  .pills{display:flex; gap:4px; flex-shrink:0;}
+  .pill{font-family:var(--mono); font-size:9px; letter-spacing:.5px; padding:2px 6px; border:1px solid var(--line2); color:var(--dim);}
+  .pill.y{border-color:rgba(95,214,139,.5); color:var(--ok);}
+  .pill.n{border-color:rgba(255,92,92,.4); color:var(--bad); text-decoration:line-through;}
+  .pill.g{border-color:var(--amber-dim); color:var(--amber);}
+
+  footer{
+    position:absolute; left:28px; bottom:4px; z-index:3;
+    font-family:var(--mono); font-size:9.5px; color:var(--faint);
+  }
+  footer a{color:var(--dim);}
+  @media (max-width:1100px){
+    .info .w-name{font-size:30px;}
+    .stats{width:250px;}
+    .gun-wrap{width:78vw;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Florida <span>Multigun</span></h1>
+  <nav>
+    <button class="tab active" id="tab-rifle" onclick="showTab('rifle')">Rifle</button>
+    <button class="tab" id="tab-pistol" onclick="showTab('pistol')">Pistol</button>
+    <button class="tab" id="tab-shotgun" onclick="showTab('shotgun')">Shotgun</button>
+  </nav>
+  <div class="hdr-right">
+    <div class="flag" id="flag-heavy" title="Heavy: rifle in .308 / 6.5 / 7.62x39 AND pistol .40 cal or larger. Velocity ≤ 3,000 fps, no penetrator ammo. Only 1 hit on paper required.">HEAVY</div>
+    <div class="flag" id="flag-goofy" title="Goofy Gun: oddball equipment — revolvers, double-barrels, bolt-actions, historical firearms — run under the standard restrictions.">GOOFY</div>
+    <div class="match-pill clip-sm">
+      <div class="l">Match Division</div>
+      <div class="v" id="matchDiv">—</div>
+    </div>
+  </div>
+</header>
+
+<div class="screen active" id="screen-rifle"></div>
+<div class="screen" id="screen-pistol"></div>
+<div class="screen" id="screen-shotgun"></div>
+
+<script>
+/* =====================================================================
+   OPTIONAL EXTERNAL RENDERS — drop in files from another program.
+   1) 3D: export a .glb from Blender (or license one) and set MODELS.
+      The stage swaps to an orbitable 3D viewer automatically.
+   2) 2D photoreal: render the bare gun + each attachment as aligned,
+      transparent PNGs from a locked camera and set IMAGES. Attachment
+      layers toggle with the same option ids used by the rules engine.
+   Leave empty to use the built-in vector renders.
+   ===================================================================== */
+const MODELS = { rifle:'', pistol:'', shotgun:'' };            // e.g. rifle:'models/rifle.glb'
+const IMAGES = {                                               // e.g. rifle:{ base:'img/rifle.png', overlays:{ optic:{ dot:'img/rifle-dot.png' } } }
+  rifle:{ base:'', overlays:{} },
+  pistol:{ base:'', overlays:{} },
+  shotgun:{ base:'', overlays:{} }
+};
+const MODEL_VIEWER_CDN = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js';
+
+/* =====================================================================
+   RULES DATA — per-division legality. tac/mod: true = legal,
+   string = violation reason. Open is always legal.
+   ===================================================================== */
+const DIV_META = {
+  tac:  { name:'Tactical / Limited', short:'TAC' },
+  mod:  { name:'Modified (CO)',      short:'MOD' },
+  open: { name:'Open',               short:'OPEN' }
+};
+
+const WEAPONS = {
+  rifle: {
+    label:'Rifle',
+    slots: [
+      { id:'platform', label:'Receiver / Platform', icon:'receiver', opts:[
+        { id:'factory', name:'Factory Semi-Auto (AR-pattern)', sub:'Factory configuration, internal mods OK', tac:true, mod:true },
+        { id:'custom',  name:'Custom / Race Configuration',    sub:'Non-factory appearance or configuration', tac:'Tactical requires factory configuration & appearance', mod:'Modified requires factory configuration & appearance' },
+        { id:'bolt',    name:'Bolt-Action / Historical',       sub:'Oddball platform — Goofy Gun candidate', tac:true, mod:true, goofy:true }
+      ]},
+      { id:'caliber', label:'Chambering', icon:'ammo', opts:[
+        { id:'556', name:'5.56 NATO / .223 Rem', sub:'Standard multigun chambering', tac:true, mod:true },
+        { id:'308', name:'.308 Win',             sub:'Heavy Division caliber', tac:true, mod:true, heavy:true },
+        { id:'65',  name:'6.5 Creedmoor',        sub:'Heavy Division caliber', tac:true, mod:true, heavy:true },
+        { id:'762', name:'7.62x39',              sub:'Heavy Division caliber', tac:true, mod:true, heavy:true }
+      ]},
+      { id:'optic', label:'Optic', icon:'optic', opts:[
+        { id:'irons',  name:'Iron Sights Only',            sub:'Fixed or popup', tac:true, mod:true },
+        { id:'dot',    name:'Red Dot (non-magnified)',     sub:'Single 1x electronic sight', tac:true, mod:true },
+        { id:'lpvo',   name:'Magnified Optic / LPVO',      sub:'One magnified optical sight', tac:true, mod:true },
+        { id:'dual',   name:'Magnified + Offset Red Dot',  sub:'Two sighting systems', tac:'Only ONE optical sight allowed (backup irons/popups only)', mod:'Only ONE optical sight allowed' }
+      ]},
+      { id:'muzzle', label:'Muzzle', icon:'muzzle', opts:[
+        { id:'flash', name:'Bare / A2 Flash Hider',        sub:'No brake function', tac:true, mod:true },
+        { id:'comp',  name:'Compensator ≤ 1" × 3"',        sub:'Within Tactical size limit', tac:true, mod:true },
+        { id:'bigcomp', name:'Oversized Compensator',      sub:'Exceeds 1" dia × 3" length', tac:'Compensator max 1" diameter × 3" length', mod:'Exceeds factory-style configuration' },
+        { id:'can',   name:'Suppressor',                   sub:'Explicitly allowed in Tactical', tac:true, mod:true }
+      ]},
+      { id:'support', label:'Support', icon:'bipod', opts:[
+        { id:'none',   name:'None',                        sub:'Sling only', tac:true, mod:true },
+        { id:'bipod20',name:'Bipod ≤ 20"',                 sub:'Must stay attached when used', tac:'Supporting devices (bipods, bags) not allowed in Tactical', mod:true },
+        { id:'bipodxl',name:'Bipod > 20"',                 sub:'Long legs / tall shooting', tac:'Supporting devices not allowed in Tactical', mod:'Modified bipods limited to ≤ 20"' },
+        { id:'bag',    name:'Support Bag',                 sub:'Bag rider / positional support', tac:'Supporting devices (bipods, bags) not allowed in Tactical', mod:true }
+      ]},
+      { id:'rail', label:'Rail 1', icon:'light', opts:[
+        { id:'none',  name:'None', sub:'Clean handguard', tac:true, mod:true },
+        { id:'light', name:'Weapon Light', sub:'Illumination only', tac:true, mod:true }
+      ]},
+      { id:'rail2', label:'Rail 2', icon:'laser', opts:[
+        { id:'none',  name:'None', sub:'No second accessory', tac:true, mod:true },
+        { id:'laser', name:'Laser', sub:'Aiming laser', tac:'Tactical allows one sighting system — a laser adds a second electronic aiming device', mod:true }
+      ]}
+    ],
+    nodes:{
+      platform:{nx:63, ny:13, ax:57, ay:40},
+      caliber:{nx:85, ny:56, ax:44, ay:44},
+      optic:{nx:36, ny:9, ax:41, ay:31},
+      muzzle:{nx:90, ny:28, ax:80, ay:44},
+      support:{nx:37, ny:84, ax:52, ay:57},
+      rail:{nx:16, ny:66, ax:47, ay:53},
+      rail2:{nx:14, ny:40, ax:58, ay:56}
+    }
+  },
+
+  pistol: {
+    label:'Pistol',
+    slots: [
+      { id:'platform', label:'Frame / Platform', icon:'receiver', opts:[
+        { id:'factory', name:'Factory Semi-Auto',  sub:'Factory configuration, internal mods OK', tac:true, mod:true },
+        { id:'custom',  name:'Custom / Race Gun',  sub:'Non-factory appearance or configuration', tac:'Tactical requires factory configuration & appearance', mod:'Modified requires factory configuration & appearance' },
+        { id:'revolver',name:'Revolver',           sub:'Oddball platform — Goofy Gun candidate', tac:true, mod:true, goofy:true }
+      ]},
+      { id:'caliber', label:'Chambering', icon:'ammo', opts:[
+        { id:'9',   name:'9mm',         sub:'Standard multigun chambering', tac:true, mod:true },
+        { id:'40',  name:'.40 S&W',     sub:'Heavy Division minimum caliber', tac:true, mod:true, heavy:true },
+        { id:'45',  name:'.45 ACP',     sub:'Typical Heavy Division pistol', tac:true, mod:true, heavy:true },
+        { id:'357', name:'.357 Magnum', sub:'Revolver magnum — Heavy permitted', tac:true, mod:true, heavy:true }
+      ]},
+      { id:'optic', label:'Optic', icon:'optic', opts:[
+        { id:'irons', name:'Iron Sights',              sub:'Factory or upgraded irons', tac:true, mod:true },
+        { id:'slidedot', name:'Slide-Mounted Red Dot', sub:'Non-magnified, between rear sight & ejection port', tac:'No electronic, optical, or extended sights in Tactical', mod:true },
+        { id:'framemount', name:'Frame-Mounted Optic', sub:'Mounted forward of the slide', tac:'No electronic, optical, or extended sights in Tactical', mod:'Optic must be slide-mounted between rear sight & ejection port' }
+      ]},
+      { id:'muzzle', label:'Muzzle', icon:'muzzle', opts:[
+        { id:'none',  name:'Standard Barrel',   sub:'No brake or porting', tac:true, mod:true },
+        { id:'comp',  name:'Compensator',       sub:'Threaded muzzle brake', tac:'Compensators & barrel porting not allowed in Tactical', mod:'Compensators & barrel porting not allowed in Modified' },
+        { id:'ported',name:'Ported Barrel',     sub:'Factory or custom porting', tac:'Compensators & barrel porting not allowed in Tactical', mod:'Compensators & barrel porting not allowed in Modified' }
+      ]},
+      { id:'magazine', label:'Magazine', icon:'mag', opts:[
+        { id:'std',   name:'Standard ≤ 140mm',  sub:'Staggered-column legal everywhere', tac:true, mod:true },
+        { id:'ext',   name:'Extended 141–142mm',sub:'Inside Modified 142mm staggered limit', tac:'Tactical staggered mags max 140mm OAL (170mm single-stack)', mod:true },
+        { id:'stick', name:'Big Stick > 142mm', sub:'Beyond staggered limits', tac:'Exceeds Tactical 140mm staggered limit', mod:'Exceeds Modified 142mm staggered limit (172mm single-stack)' }
+      ]},
+      { id:'rail', label:'Rail', icon:'light', opts:[
+        { id:'none',  name:'None',       sub:'Clean dust cover', tac:true, mod:true },
+        { id:'light', name:'Flashlight', sub:'Explicitly allowed in Modified', tac:true, mod:true },
+        { id:'laser', name:'Laser',      sub:'Aiming laser', tac:'Electronic sighting devices not allowed in Tactical', mod:'Lasers prohibited on Modified handguns' }
+      ]}
+    ],
+    nodes:{
+      platform:{nx:30, ny:16, ax:42, ay:38},
+      caliber:{nx:77, ny:22, ax:60, ay:36},
+      optic:{nx:52, ny:8, ax:44, ay:33},
+      muzzle:{nx:88, ny:48, ax:71, ay:42},
+      magazine:{nx:66, ny:84, ax:38, ay:72},
+      rail:{nx:22, ny:72, ax:57, ay:52}
+    }
+  },
+
+  shotgun: {
+    label:'Shotgun',
+    slots: [
+      { id:'platform', label:'Action / Feeding', icon:'receiver', opts:[
+        { id:'pump',   name:'Tube-Fed Pump',          sub:'Factory configuration', tac:true, mod:true },
+        { id:'semi',   name:'Tube-Fed Semi-Auto',     sub:'Factory configuration', tac:true, mod:true },
+        { id:'boxmag', name:'Box-Magazine Semi-Auto', sub:'Detachable magazines', tac:'Detachable magazines prohibited in Tactical', mod:'Detachable magazines prohibited in Modified' },
+        { id:'double', name:'Double-Barrel',          sub:'Oddball platform — Goofy Gun candidate', tac:true, mod:true, goofy:true }
+      ]},
+      { id:'optic', label:'Sights', icon:'optic', opts:[
+        { id:'bead',  name:'Bead / Iron Sights',        sub:'Standard shotgun sights', tac:true, mod:true },
+        { id:'dot',   name:'Red Dot (non-magnifying)',  sub:'One electronic/optical sight', tac:'No electronic or optical sights on Tactical shotguns', mod:true },
+        { id:'mag',   name:'Magnified Optic',           sub:'Magnifying glass optic', tac:'No electronic or optical sights on Tactical shotguns', mod:'Modified shotgun optic must be non-magnifying' }
+      ]},
+      { id:'muzzle', label:'Muzzle', icon:'muzzle', opts:[
+        { id:'choke', name:'Choke Only',                sub:'No brake or porting', tac:true, mod:true },
+        { id:'comp',  name:'Compensator / Ported Barrel', sub:'Recoil control', tac:'Compensators & barrel porting not allowed on Tactical shotguns', mod:true }
+      ]},
+      { id:'support', label:'Support', icon:'bipod', opts:[
+        { id:'none',   name:'None',        sub:'Sling only', tac:true, mod:true },
+        { id:'bipod20',name:'Bipod ≤ 20"', sub:'Allowed in Modified', tac:'Supporting devices prohibited on Tactical shotguns', mod:true }
+      ]},
+      { id:'capacity', label:'Tube / Capacity', icon:'mag', opts:[
+        { id:'nine',   name:'Start ≤ 9 Rounds',            sub:'Legal pre-buzzer load everywhere', tac:true, mod:true },
+        { id:'thirteen',name:'Start 10–13 Rounds',         sub:'Extended tube, Modified max', tac:'Tactical max 9 rounds loaded before the buzzer', mod:true },
+        { id:'race',   name:'14+ / Speedloader Tubes',     sub:'Primer relief cuts required on speedloaders', tac:'Exceeds Tactical 9-round pre-load limit', mod:'Exceeds Modified 13-round pre-load limit; speedloaders are Open only' }
+      ]},
+      { id:'rail', label:'Rail', icon:'light', opts:[
+        { id:'none',  name:'None',       sub:'Clean forend', tac:true, mod:true },
+        { id:'light', name:'Weapon Light', sub:'Explicitly allowed in Modified', tac:true, mod:true },
+        { id:'laser', name:'Laser',      sub:'Explicitly allowed on Modified shotguns', tac:'No electronic sighting devices on Tactical shotguns', mod:true }
+      ]}
+    ],
+    nodes:{
+      platform:{nx:62, ny:12, ax:33, ay:42},
+      optic:{nx:32, ny:9, ax:27, ay:31},
+      muzzle:{nx:90, ny:30, ax:85, ay:42},
+      support:{nx:44, ny:84, ax:55, ay:58},
+      capacity:{nx:74, ny:78, ax:66, ay:52},
+      rail:{nx:16, ny:66, ax:45, ay:55}
+    }
+  }
+};
+
+/* =====================================================================
+   STATE + CLASSIFIER
+   ===================================================================== */
+const state = {};
+for (const w in WEAPONS){ state[w] = {}; WEAPONS[w].slots.forEach(s => state[w][s.id] = s.opts[0].id); }
+const openViol = { rifle:null, pistol:null, shotgun:null };
+const openSlot = { rifle:null, pistol:null, shotgun:null };
+
+function getOpt(w, slotId){
+  const slot = WEAPONS[w].slots.find(s => s.id === slotId);
+  return slot ? slot.opts.find(o => o.id === state[w][slotId]) : null;
+}
+function classify(w){
+  const res = { tac:{ok:true, viol:[]}, mod:{ok:true, viol:[]}, open:{ok:true, viol:[]}, goofy:false, heavy:false };
+  WEAPONS[w].slots.forEach(slot => {
+    const o = getOpt(w, slot.id);
+    if (o.tac !== true){ res.tac.ok = false; res.tac.viol.push(`${slot.label}: ${o.name} — ${o.tac}`); }
+    if (o.mod !== true){ res.mod.ok = false; res.mod.viol.push(`${slot.label}: ${o.name} — ${o.mod}`); }
+    if (o.goofy) res.goofy = true;
+    if (o.heavy) res.heavy = true;
+  });
+  res.current = res.tac.ok ? 'tac' : (res.mod.ok ? 'mod' : 'open');
+  return res;
+}
+function classifyMatch(){
+  const r = classify('rifle'), p = classify('pistol'), s = classify('shotgun');
+  const eligible = ['tac','mod','open'].filter(d => r[d].ok && p[d].ok && s[d].ok);
+  return { rifle:r, pistol:p, shotgun:s, current:eligible[0], heavy:r.heavy && p.heavy, goofy:r.goofy || p.goofy || s.goofy };
+}
+
+/* =====================================================================
+   NODE ICONS (mini glyphs inside the slot boxes)
+   ===================================================================== */
+const ICONS = {
+  receiver:'<rect x="4" y="14" width="30" height="10" rx="2" fill="#aeb9c2"/><rect x="10" y="24" width="7" height="9" fill="#aeb9c2"/><rect x="6" y="10" width="26" height="4" fill="#77828c"/>',
+  ammo:'<path d="M12 30 L12 14 Q12 8 15 5 Q18 8 18 14 L18 30 Z" fill="#aeb9c2"/><rect x="11" y="30" width="8" height="4" fill="#77828c"/><path d="M24 30 L24 16 Q24 11 26.5 8 Q29 11 29 16 L29 30 Z" fill="#77828c"/>',
+  optic:'<rect x="5" y="14" width="28" height="12" rx="6" fill="#aeb9c2"/><circle cx="28" cy="20" r="4" fill="#33414c"/><rect x="14" y="26" width="10" height="5" fill="#77828c"/>',
+  muzzle:'<rect x="4" y="16" width="10" height="6" fill="#77828c"/><rect x="14" y="12" width="20" height="14" rx="3" fill="#aeb9c2"/><rect x="19" y="12" width="2.5" height="14" fill="#33414c"/><rect x="26" y="12" width="2.5" height="14" fill="#33414c"/>',
+  bipod:'<rect x="14" y="8" width="10" height="6" fill="#aeb9c2"/><line x1="17" y1="14" x2="9" y2="32" stroke="#aeb9c2" stroke-width="3"/><line x1="21" y1="14" x2="29" y2="32" stroke="#aeb9c2" stroke-width="3"/>',
+  mag:'<path d="M12 6 L27 6 L25 26 Q24 32 18 31 L10 29 Q9 16 12 6 Z" fill="#aeb9c2"/><path d="M13 10 L25 10" stroke="#33414c" stroke-width="2"/><path d="M12.5 15 L24.5 15" stroke="#33414c" stroke-width="2"/>',
+  laser:'<rect x="5" y="15" width="18" height="10" rx="3" fill="#aeb9c2"/><circle cx="26" cy="20" r="3" fill="#ff6a55"/><path d="M30 20 L37 20" stroke="#ff6a55" stroke-width="2" stroke-dasharray="3 2"/>',
+  light:'<rect x="6" y="14" width="16" height="10" rx="3" fill="#aeb9c2"/><rect x="22" y="12" width="6" height="14" rx="2" fill="#77828c"/><path d="M30 15 L36 11 M30 19 L37 19 M30 23 L36 27" stroke="#ffd27a" stroke-width="2"/>'
+};
+
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+function pillRow(o){
+  const pills = [
+    `<span class="pill ${o.tac===true?'y':'n'}">TAC</span>`,
+    `<span class="pill ${o.mod===true?'y':'n'}">MOD</span>`,
+    `<span class="pill y">OPEN</span>`
+  ];
+  if (o.goofy) pills.push('<span class="pill g">GOOFY</span>');
+  if (o.heavy) pills.push('<span class="pill g">HEAVY</span>');
+  return `<div class="pills">${pills.join('')}</div>`;
+}
+
+function gunStage(w){
+  if (MODELS[w]){
+    loadModelViewer();
+    return `<model-viewer src="${MODELS[w]}" camera-controls auto-rotate shadow-intensity="1" exposure="1.05"></model-viewer>`;
+  }
+  const img = IMAGES[w];
+  if (img && img.base){
+    let layers = `<img class="layer-img" src="${img.base}" alt="">`;
+    for (const slotId in img.overlays){
+      const url = img.overlays[slotId][state[w][slotId]];
+      if (url) layers += `<img class="layer-img" src="${url}" alt="">`;
+    }
+    return `<div style="position:relative">${layers}</div>`;
+  }
+  return svgFor(w);
+}
+
+function renderScreen(w){
+  const c = classify(w);
+  const el = document.getElementById('screen-'+w);
+  const wcfg = WEAPONS[w];
+
+  const wires = wcfg.slots.map(s => {
+    const n = wcfg.nodes[s.id];
+    return `<line x1="${n.nx}" y1="${n.ny}" x2="${n.ax}" y2="${n.ay}"/><circle cx="${n.ax}" cy="${n.ay}" r="0.45"/>`;
+  }).join('');
+
+  const nodes = wcfg.slots.map(s => {
+    const n = wcfg.nodes[s.id];
+    const o = getOpt(w, s.id);
+    const conflict = (o.tac !== true || o.mod !== true);
+    return `<div class="node ${openSlot[w]===s.id?'sel':''} ${conflict?'conflict':''}" style="left:${n.nx}%; top:${n.ny}%" onclick="toggleSlot('${w}','${s.id}')">
+      <div class="n-lbl">${s.label}</div>
+      <div class="n-box clip-sm"><svg viewBox="0 0 38 38">${ICONS[s.icon]||''}</svg></div>
+      <div class="n-cur">${o.name}</div>
+    </div>`;
+  }).join('');
+
+  let flyout = '';
+  if (openSlot[w]){
+    const slot = wcfg.slots.find(s => s.id === openSlot[w]);
+    const sel = getOpt(w, slot.id);
+    flyout = `<div class="flyout clip-sm">
+      <div class="f-head"><span class="t">${slot.label}</span><span class="x" onclick="toggleSlot('${w}','${slot.id}')">✕ CLOSE</span></div>
+      <div class="f-body">${slot.opts.map(o => `
+        <div class="opt ${o.id===sel.id?'sel':''}" onclick="pick('${w}','${slot.id}','${o.id}')">
+          <div><div class="o-name">${o.name}</div><span class="o-sub">${o.sub}</span></div>
+          ${pillRow(o)}
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  let viol = '';
+  if (openViol[w]){
+    const d = openViol[w];
+    const list = c[d].viol.length
+      ? `<ul>${c[d].viol.map(v=>`<li>${v}</li>`).join('')}</ul>`
+      : `<div class="allclear">ALL CLEAR — this build is legal in ${DIV_META[d].name}.</div>`;
+    viol = `<div class="viol clip-sm"><span class="x" onclick="toggleViol('${w}','${d}')">✕</span><h4>${DIV_META[d].name} — Rule Check</h4>${list}</div>`;
+  }
+
+  const rows = ['tac','mod','open'].map(d => {
+    const ok = c[d].ok;
+    return `<div class="st-row ${ok?'ok':'bad'}" onclick="toggleViol('${w}','${d}')">
+        <span class="n">${DIV_META[d].name}</span>
+        <span class="s">${ok?'ELIGIBLE':c[d].viol.length+' CONFLICT'+(c[d].viol.length>1?'S':'')}</span>
+      </div>
+      <div class="st-bar"><i style="width:${ok?100:Math.max(8, 100-34*c[d].viol.length)}%"></i></div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="stage">
+    <svg class="wires" viewBox="0 0 100 100" preserveAspectRatio="none">${wires}</svg>
+    <div class="gun-wrap" id="gunwrap-${w}">${gunStage(w)}</div>
+    ${nodes}
+    <div class="info">
+      <div class="w-name">${wcfg.label}</div>
+      <div class="w-div-lbl">${wcfg.label} Division</div>
+      <div class="w-div clip-sm">${DIV_META[c.current].name}</div>
+      <div class="g-flags">
+        ${c.goofy?'<div class="flag on">GOOFY GUN CANDIDATE</div>':''}
+        ${c.heavy?'<div class="flag on">HEAVY CALIBER</div>':''}
+      </div>
+    </div>
+    <div class="stats clip-sm">
+      <h3>Division Eligibility — ${wcfg.label}</h3>
+      ${rows}
+      <div class="actions">
+        <button class="act" onclick="copyLoadout()">Copy Loadout</button>
+        <button class="act ghost" onclick="resetWeapon('${w}')">Reset</button>
+      </div>
+      <div class="copied" id="copied-${w}">COPIED TO CLIPBOARD</div>
+    </div>
+    ${viol}
+    ${flyout}
+    <footer>Rules: <a href="https://www.floridamultigun.com/divisions" target="_blank" rel="noopener">floridamultigun.com/divisions</a> — silent items resolved permissively; Match Director makes final equipment calls.</footer>
+  </div>`;
+}
+
+function renderHeader(){
+  const m = classifyMatch();
+  document.getElementById('matchDiv').textContent = DIV_META[m.current].name;
+  document.getElementById('flag-heavy').classList.toggle('on', m.heavy);
+  document.getElementById('flag-goofy').classList.toggle('on', m.goofy);
+}
+function renderAll(){ ['rifle','pistol','shotgun'].forEach(renderScreen); renderHeader(); }
+
+/* =====================================================================
+   INTERACTION
+   ===================================================================== */
+function showTab(w){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+w).classList.add('active');
+  document.getElementById('screen-'+w).classList.add('active');
+}
+function toggleSlot(w, slotId){ openSlot[w] = (openSlot[w]===slotId)?null:slotId; renderScreen(w); }
+function pick(w, slotId, optId){ state[w][slotId] = optId; renderScreen(w); renderHeader(); }
+function toggleViol(w, d){ openViol[w] = (openViol[w]===d)?null:d; renderScreen(w); }
+function resetWeapon(w){
+  WEAPONS[w].slots.forEach(s => state[w][s.id] = s.opts[0].id);
+  openViol[w] = null; openSlot[w] = null;
+  renderScreen(w); renderHeader();
+}
+function copyLoadout(){
+  const m = classifyMatch();
+  let txt = `FLORIDA MULTIGUN LOADOUT\nMatch Division: ${DIV_META[m.current].name}`;
+  if (m.heavy) txt += `  [HEAVY ELIGIBLE]`;
+  if (m.goofy) txt += `  [GOOFY GUN]`;
+  txt += `\n`;
+  ['rifle','pistol','shotgun'].forEach(w => {
+    txt += `\n${WEAPONS[w].label.toUpperCase()} — ${DIV_META[classify(w).current].name}\n`;
+    WEAPONS[w].slots.forEach(s => { txt += `  ${s.label}: ${getOpt(w,s.id).name}\n`; });
+  });
+  txt += `\nRules: floridamultigun.com/divisions`;
+  navigator.clipboard.writeText(txt).then(()=>{
+    document.querySelectorAll('.copied').forEach(c=>c.classList.add('show'));
+    setTimeout(()=>document.querySelectorAll('.copied').forEach(c=>c.classList.remove('show')), 1800);
+  });
+}
+let mvLoaded = false;
+function loadModelViewer(){
+  if (mvLoaded) return; mvLoaded = true;
+  const s = document.createElement('script'); s.type = 'module'; s.src = MODEL_VIEWER_CDN;
+  document.head.appendChild(s);
+}
+
+/* =====================================================================
+   BUILT-IN WEAPON RENDERS — vector-stencil style: solid black
+   silhouettes with fine white linework. Attachments keyed to option
+   ids; equipped items carry an amber glow + callout label.
+   ===================================================================== */
+const show = c => c ? '' : 'hidden';
+const marks = (x0,n,step,y,w,h,fill,rx=1)=>{ let s=''; for(let i=0;i<n;i++) s+=`<rect x="${x0+i*step}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}"/>`; return s; };
+const B='#05080b', W='#e6edf3', O='#414d58';
+
+const defs = p => `<defs>
+  <radialGradient id="${p}reddot" cx=".5" cy=".5" r=".5">
+    <stop offset="0" stop-color="#ff6a55"/><stop offset="1" stop-color="#ff6a55" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="${p}glow" x="-40%" y="-40%" width="180%" height="180%">
+    <feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-color="#ff9a2e" flood-opacity=".40"/>
+  </filter>
+  <filter id="${p}soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7"/></filter>
+  <pattern id="${p}diam" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <path d="M0 5.5 H11 M5.5 0 V11" stroke="${W}" stroke-width="1.5"/>
+  </pattern>
+</defs>`;
+
+function svgFor(w){
+  if (w==='rifle') return rifleSVG();
+  if (w==='pistol') return pistolSVG();
+  return shotgunSVG();
+}
+
+/* ---------------- RIFLE — AR-15, stencil style ---------------- */
+function rifleSVG(){
+  const s = state.rifle;
+  return `<svg viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg">
+  ${defs('r')}
+  <ellipse cx="500" cy="336" rx="400" ry="15" fill="#000" opacity=".45" filter="url(#rsoft)"/>
+
+  <!-- stock -->
+  <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M46 122 L208 122 L208 160 L192 163 L84 216 L84 232 L46 232 Z"/>
+  <line x1="52" y1="128" x2="204" y2="128" stroke="${W}" stroke-width="1.8"/>
+  ${marks(60,7,19,133,10,15,W,2)}
+  <line x1="52" y1="152" x2="204" y2="152" stroke="${W}" stroke-width="1.2" opacity=".6"/>
+  <g transform="rotate(-27 150 192)"><rect x="128" y="186" width="42" height="11" rx="5.5" fill="${B}" stroke="${W}" stroke-width="1.5"/></g>
+  <line x1="50" y1="126" x2="50" y2="228" stroke="${W}" stroke-width="1.4" opacity=".7"/>
+
+  <!-- buffer tube -->
+  <rect x="208" y="140" width="52" height="28" fill="${B}" stroke="${O}"/>
+  <line x1="218" y1="143" x2="218" y2="165" stroke="${W}" stroke-width="1.4"/>
+  <line x1="230" y1="143" x2="230" y2="165" stroke="${W}" stroke-width="1.4"/>
+  <line x1="242" y1="143" x2="242" y2="165" stroke="${W}" stroke-width="1.4"/>
+
+  <!-- top rail -->
+  <rect x="256" y="110" width="612" height="16" fill="${B}" stroke="${O}"/>
+  ${marks(264,46,13,112,6,7,W,1)}
+  <line x1="258" y1="125" x2="866" y2="125" stroke="${W}" stroke-width="1.2" opacity=".7"/>
+
+  <!-- upper receiver -->
+  <rect x="260" y="126" width="172" height="48" fill="${B}" stroke="${O}"/>
+  <rect x="264" y="130" width="32" height="8" fill="${B}" stroke="${W}" stroke-width="1.3"/>
+  <rect x="352" y="148" width="54" height="24" rx="4" fill="${B}" stroke="${W}" stroke-width="1.8"/>
+  <line x1="352" y1="177" x2="406" y2="177" stroke="${W}" stroke-width="1.3" opacity=".7"/>
+  <path fill="${B}" stroke="${W}" stroke-width="1.5" d="M408 144 L423 158 L408 172 Z"/>
+  <circle cx="424" cy="166" r="6.5" fill="${B}" stroke="${W}" stroke-width="1.5"/>
+
+  <!-- lower receiver -->
+  <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M260 174 L432 174 L432 212 L400 215 L388 212 L276 212 Q260 210 260 196 Z"/>
+  <line x1="430" y1="178" x2="408" y2="212" stroke="${W}" stroke-width="1.4" opacity=".8"/>
+  <circle cx="273" cy="183" r="3" fill="none" stroke="${W}" stroke-width="1.3"/>
+  <circle cx="396" cy="181" r="3" fill="none" stroke="${W}" stroke-width="1.3"/>
+  <path d="M300 182 L316 178" stroke="${W}" stroke-width="2"/><circle cx="300" cy="182" r="2.2" fill="${W}"/>
+
+  <!-- grip -->
+  <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M270 212 Q306 210 310 218 Q308 230 298 236 L278 294 Q274 306 258 304 L242 298 Q248 248 264 218 Q266 212 270 212 Z"/>
+  <path d="M274 232 Q282 236 280 244" stroke="${W}" stroke-width="1.6" fill="none"/>
+  <path d="M252 294 L274 298" stroke="${W}" stroke-width="1.6"/>
+  <path d="M258 258 L282 262 M254 272 L278 276" stroke="${W}" stroke-width="1" opacity=".55"/>
+
+  <!-- trigger guard + trigger -->
+  <path fill="none" stroke="${W}" stroke-width="13" d="M316 214 L316 230 Q316 238 326 238 L368 238 Q376 234 380 216"/>
+  <path fill="none" stroke="${B}" stroke-width="9.5" d="M316 214 L316 230 Q316 238 326 238 L368 238 Q376 234 380 216"/>
+  <path d="M340 218 Q336 226 338 234" stroke="${W}" stroke-width="2.5" fill="none"/>
+
+  <!-- magazine (curved) -->
+  <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M436 215 L390 214 L382 252 Q376 300 390 328 L446 320 Q454 272 444 228 Q442 216 436 215 Z"/>
+  <path d="M384 240 Q377 288 390 326" stroke="${W}" stroke-width="1.8" fill="none"/>
+  <path d="M440 242 Q412 248 386 244 M443 266 Q414 274 384 270 M444 290 Q416 300 386 296" stroke="${W}" stroke-width="1.6" fill="none"/>
+  <path fill="${B}" stroke="${W}" stroke-width="1.5" d="M448 318 L390 326 L394 344 L452 334 Z"/>
+
+  <!-- handguard (M-LOK) -->
+  <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M432 126 L868 126 L868 170 L846 184 L432 184 Z"/>
+  <line x1="436" y1="131" x2="862" y2="131" stroke="${W}" stroke-width="1.2" opacity=".7"/>
+  ${[0,1,2,3,4,5,6,7].map(i=>`<rect x="${452+i*52}" y="149" width="40" height="11" rx="5.5" fill="${B}" stroke="${W}" stroke-width="1.6"/>`).join('')}
+  ${[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(i=>`<circle cx="${458+i*26}" cy="174" r="2.4" fill="${W}"/>`).join('')}
+  <line x1="868" y1="170" x2="846" y2="184" stroke="${W}" stroke-width="1.2" opacity=".7"/>
+
+  <!-- barrel -->
+  <path fill="${B}" stroke="${O}" d="M866 157 L900 158 L900 170 L866 171 Z"/>
+  <line x1="870" y1="160" x2="898" y2="161" stroke="${W}" stroke-width="1" opacity=".65"/>
+
+  <!-- A2 flash hider (default) -->
+  <g class="${show(s.muzzle==='flash')}">
+    <path fill="${B}" stroke="${O}" d="M900 150 L946 150 Q954 150 954 158 L954 168 Q954 176 946 176 L900 176 Z"/>
+    ${marks(908,3,13,153,4,10,W,1.5)}
+    <line x1="950" y1="152" x2="950" y2="174" stroke="${W}" stroke-width="1.3"/>
+  </g>
+
+  <!-- ATTACHMENTS -->
+  <g class="${show(s.optic==='irons')}">
+    <g filter="url(#rglow)">
+      <rect x="320" y="90" width="28" height="20" fill="${B}" stroke="${W}" stroke-width="1.6"/>
+      <rect x="330" y="82" width="7" height="10" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+      <rect x="700" y="88" width="20" height="22" fill="${B}" stroke="${W}" stroke-width="1.6"/>
+      <rect x="707" y="78" width="6" height="12" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+    </g>
+    <text class="svg-label" x="302" y="72">BACKUP IRONS</text>
+  </g>
+
+  <g class="${show(s.optic==='dot')}">
+    <g filter="url(#rglow)">
+      <rect x="330" y="94" width="92" height="16" rx="2" fill="${B}" stroke="${O}"/>
+      ${marks(340,6,14,98,6,8,W,1)}
+      <rect x="338" y="50" width="84" height="44" rx="10" fill="${B}" stroke="${W}" stroke-width="1.8"/>
+      <circle cx="402" cy="72" r="15" fill="${B}" stroke="${W}" stroke-width="2"/>
+      <circle cx="402" cy="72" r="8.5" fill="none" stroke="${W}" stroke-width="1" opacity=".7"/>
+      <circle cx="402" cy="72" r="3.2" fill="url(#rreddot)"/>
+      <rect x="350" y="54" width="11" height="5" fill="${W}"/><rect x="366" y="54" width="11" height="5" fill="${W}"/>
+      <line x1="346" y1="76" x2="382" y2="76" stroke="${W}" stroke-width="1.2" opacity=".7"/>
+    </g>
+    <text class="svg-label" x="330" y="40">RED DOT 1X</text>
+  </g>
+
+  <g class="${show(s.optic==='lpvo' || s.optic==='dual')}">
+    <g filter="url(#rglow)">
+      <rect x="352" y="94" width="16" height="20" fill="${B}" stroke="${W}" stroke-width="1.3"/>
+      <rect x="416" y="94" width="16" height="20" fill="${B}" stroke="${W}" stroke-width="1.3"/>
+      <rect x="340" y="108" width="104" height="8" fill="${B}" stroke="${O}"/>
+      <rect x="330" y="64" width="118" height="20" rx="8" fill="${B}" stroke="${W}" stroke-width="1.6"/>
+      <rect x="302" y="58" width="30" height="32" rx="6" fill="${B}" stroke="${W}" stroke-width="1.6"/>
+      <path fill="${B}" stroke="${W}" stroke-width="1.6" d="M448 60 L494 52 Q502 74 494 98 L448 90 Z"/>
+      <ellipse cx="495" cy="75" rx="4" ry="20" fill="none" stroke="${W}" stroke-width="1.2"/>
+      <rect x="378" y="48" width="18" height="14" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+      <line x1="336" y1="66" x2="336" y2="88" stroke="${W}" stroke-width="1.2"/>
+      <line x1="446" y1="62" x2="446" y2="90" stroke="${W}" stroke-width="1.2"/>
+    </g>
+    <text class="svg-label" x="322" y="38">MAGNIFIED LPVO</text>
+  </g>
+
+  <g class="${show(s.optic==='dual')}">
+    <g filter="url(#rglow)">
+      <rect x="512" y="84" width="34" height="22" rx="4" fill="${B}" stroke="${W}" stroke-width="1.6"/>
+      <circle cx="536" cy="95" r="4.5" fill="none" stroke="${W}" stroke-width="1.2"/>
+      <circle cx="536" cy="95" r="2" fill="url(#rreddot)"/>
+    </g>
+    <text class="svg-label" x="504" y="72">OFFSET DOT</text>
+  </g>
+
+  <g class="${show(s.muzzle==='comp')}">
+    <g filter="url(#rglow)">
+      <path fill="${B}" stroke="${O}" d="M900 146 L946 146 Q954 146 954 154 L954 172 Q954 180 946 180 L900 180 Z"/>
+      <rect x="912" y="151" width="7" height="24" fill="${W}"/><rect x="930" y="151" width="7" height="24" fill="${W}"/>
+      ${marks(908,3,14,140,6,4,W,1)}
+    </g>
+    <text class="svg-label" x="886" y="128">COMP ≤1"×3"</text>
+  </g>
+
+  <g class="${show(s.muzzle==='bigcomp')}">
+    <g filter="url(#rglow)">
+      <path fill="${B}" stroke="${O}" d="M900 136 L976 136 Q984 136 984 145 L984 179 Q984 188 976 188 L900 188 Z"/>
+      <rect x="914" y="144" width="9" height="36" fill="${W}"/><rect x="936" y="144" width="9" height="36" fill="${W}"/><rect x="958" y="144" width="9" height="36" fill="${W}"/>
+      ${marks(906,4,19,128,8,5,W,1)}
+    </g>
+    <text class="svg-label" x="884" y="118">OVERSIZED COMP</text>
+  </g>
+
+  <g class="${show(s.muzzle==='can')}">
+    <g filter="url(#rglow)">
+      <rect x="876" y="144" width="118" height="36" rx="12" fill="${B}" stroke="${O}"/>
+      <line x1="902" y1="147" x2="902" y2="177" stroke="${W}" stroke-width="1.4"/>
+      <line x1="928" y1="147" x2="928" y2="177" stroke="${W}" stroke-width="1.4"/>
+      <line x1="954" y1="147" x2="954" y2="177" stroke="${W}" stroke-width="1.4"/>
+      <line x1="984" y1="148" x2="984" y2="176" stroke="${W}" stroke-width="1.8"/>
+    </g>
+    <text class="svg-label" x="898" y="132">SUPPRESSOR</text>
+  </g>
+
+  <g class="${show(s.support==='bipod20' || s.support==='bipodxl')}">
+    <g filter="url(#rglow)">
+      <rect x="548" y="186" width="22" height="12" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+      <line x1="556" y1="198" x2="524" y2="${s.support==='bipodxl'?306:270}" stroke="${B}" stroke-width="7"/>
+      <line x1="562" y1="198" x2="594" y2="${s.support==='bipodxl'?306:270}" stroke="${B}" stroke-width="7"/>
+      <line x1="556" y1="198" x2="524" y2="${s.support==='bipodxl'?306:270}" stroke="${W}" stroke-width="1.5"/>
+      <line x1="562" y1="198" x2="594" y2="${s.support==='bipodxl'?306:270}" stroke="${W}" stroke-width="1.5"/>
+      <rect x="516" y="${s.support==='bipodxl'?304:268}" width="15" height="7" fill="${B}" stroke="${W}" stroke-width="1.2"/>
+      <rect x="588" y="${s.support==='bipodxl'?304:268}" width="15" height="7" fill="${B}" stroke="${W}" stroke-width="1.2"/>
+    </g>
+    <text class="svg-label" x="512" y="${s.support==='bipodxl'?330:294}">BIPOD ${s.support==='bipodxl'?'&gt;':'≤'}20"</text>
+  </g>
+
+  <g class="${show(s.support==='bag')}">
+    <g filter="url(#rglow)">
+      <path fill="${B}" stroke="${O}" d="M470 190 Q512 178 554 190 Q566 204 554 218 Q512 232 470 218 Q458 204 470 190 Z"/>
+      <path d="M480 193 Q512 185 544 193 M476 213 Q512 223 548 213" stroke="${W}" stroke-width="1.5" fill="none"/>
+    </g>
+    <text class="svg-label" x="480" y="254">SUPPORT BAG</text>
+  </g>
+
+  <g class="${show(s.rail==='light')}">
+    <g filter="url(#rglow)">
+      <rect x="572" y="188" width="46" height="20" rx="6" fill="${B}" stroke="${O}"/>
+      <rect x="616" y="185" width="11" height="26" rx="3" fill="${B}" stroke="${W}" stroke-width="1.5"/>
+      <line x1="578" y1="192" x2="578" y2="204" stroke="${W}" stroke-width="1.2"/>
+    </g>
+    <text class="svg-label" x="568" y="234">WEAPON LIGHT</text>
+  </g>
+  <g class="${show(s.rail2==='laser')}">
+    <g filter="url(#rglow)">
+      <rect x="640" y="188" width="40" height="16" rx="5" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+      <circle cx="676" cy="196" r="3" fill="#ff5a4d"/>
+    </g>
+    <line x1="684" y1="196" x2="990" y2="196" stroke="#ff5a4d" stroke-opacity=".8" stroke-width="2" stroke-dasharray="9 8"/>
+    <text class="svg-label" x="636" y="226">LASER</text>
+  </g>
+  </svg>`;
+}
+
+/* ---------------- PISTOL — striker-fired, stencil style ---------------- */
+function pistolSVG(){
+  const s = state.pistol;
+  return `<svg viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg">
+  ${defs('p')}
+  <ellipse cx="350" cy="450" rx="250" ry="13" fill="#000" opacity=".45" filter="url(#psoft)"/>
+
+  <!-- slide -->
+  <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M148 158 Q148 142 164 142 L544 142 L566 154 L566 212 L148 212 Z"/>
+  ${marks(162,6,11,150,6,54,W,1)}
+  <path fill="${W}" opacity=".9" d="M330 148 L468 148 L458 157 L340 157 Z"/>
+  <path fill="${W}" opacity=".7" d="M480 150 L516 150 L510 156 L484 156 Z"/>
+  <path fill="${B}" stroke="${W}" stroke-width="1.6" d="M410 148 L474 148 L474 170 L440 173 L410 163 Z"/>
+  <line x1="152" y1="208" x2="564" y2="208" stroke="${W}" stroke-width="1" opacity=".5"/>
+  <line x1="546" y1="144" x2="566" y2="155" stroke="${W}" stroke-width="1.2" opacity=".7"/>
+  <line x1="524" y1="192" x2="562" y2="192" stroke="${W}" stroke-width="2.5"/>
+  <line x1="524" y1="198" x2="562" y2="198" stroke="${W}" stroke-width="2.5"/>
+  <line x1="524" y1="204" x2="562" y2="204" stroke="${W}" stroke-width="2.5"/>
+
+  <!-- frame + rail -->
+  <rect x="352" y="212" width="214" height="32" rx="4" fill="${B}" stroke="${O}"/>
+  ${marks(384,4,30,236,18,6,W,1)}
+  <rect x="328" y="220" width="30" height="7" fill="${B}" stroke="${W}" stroke-width="1.2"/>
+
+  <!-- frame bridge + trigger guard -->
+  <path fill="${B}" stroke="${O}" d="M300 212 L366 212 L366 244 L316 244 Z"/>
+  <path fill="none" stroke="${W}" stroke-width="13" d="M316 244 Q302 272 322 290 Q346 300 394 294 Q407 288 407 246"/>
+  <path fill="none" stroke="${B}" stroke-width="9.5" d="M316 244 Q302 272 322 290 Q346 300 394 294 Q407 288 407 246"/>
+  <path d="M344 240 Q336 258 342 276" stroke="${W}" stroke-width="2.5" fill="none"/>
+  <path d="M346 246 L346 260" stroke="${B}" stroke-width="1.5"/>
+
+  <!-- grip -->
+  <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M172 212 L312 212 L310 234 Q296 246 292 268 L252 398 Q248 412 232 410 L150 398 Q140 396 142 382 L162 234 Q166 214 172 212 Z"/>
+  <path d="M150 206 Q136 210 140 221 L166 227 L168 214 Z" fill="${B}" stroke="${W}" stroke-width="1.3"/>
+  <path d="M180 246 L284 254 L250 392 L160 382 Z" fill="url(#pdiam)"/>
+  <path d="M166 232 L146 384" stroke="${W}" stroke-width="1.5" opacity=".8"/>
+  <path d="M162 260 L154 258 M159 286 L151 284 M156 312 L148 310 M153 338 L145 336 M150 362 L142 360" stroke="${W}" stroke-width="1.6"/>
+  <path d="M290 274 Q278 278 274 290 M282 306 Q272 308 268 320 M274 338 Q265 340 262 350" stroke="${W}" stroke-width="1.4" fill="none"/>
+  <line x1="176" y1="217" x2="306" y2="217" stroke="${W}" stroke-width="1" opacity=".6"/>
+  <path fill="${B}" stroke="${W}" stroke-width="1.4" d="M148 400 L250 400 L246 420 L144 413 Z"/>
+
+  <!-- iron sights -->
+  <g class="${show(s.optic==='irons')}">
+    <g filter="url(#pglow)">
+      <rect x="170" y="126" width="24" height="16" fill="${B}" stroke="${W}" stroke-width="1.5"/>
+      <rect x="179" y="129" width="6" height="9" fill="${W}"/>
+      <rect x="534" y="128" width="11" height="14" fill="${B}" stroke="${W}" stroke-width="1.5"/>
+      <circle cx="539.5" cy="133" r="2" fill="${W}"/>
+    </g>
+    <text class="svg-label" x="162" y="112">IRONS</text>
+  </g>
+
+  <!-- slide-mounted red dot -->
+  <g class="${show(s.optic==='slidedot')}">
+    <g filter="url(#pglow)">
+      <path fill="${B}" stroke="${W}" stroke-width="1.7" d="M180 142 L180 110 Q180 94 198 92 L240 92 Q258 94 260 108 L260 142 Z"/>
+      <rect x="240" y="102" width="13" height="32" rx="4" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+      <circle cx="247" cy="114" r="3" fill="url(#preddot)"/>
+      <circle cx="192" cy="103" r="3" fill="none" stroke="${W}" stroke-width="1.2"/>
+      <line x1="188" y1="120" x2="234" y2="120" stroke="${W}" stroke-width="1" opacity=".6"/>
+    </g>
+    <text class="svg-label" x="168" y="80">SLIDE DOT</text>
+  </g>
+
+  <!-- frame-mounted optic -->
+  <g class="${show(s.optic==='framemount')}">
+    <g filter="url(#pglow)">
+      <rect x="380" y="212" width="48" height="22" rx="4" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+      <rect x="396" y="96" width="16" height="118" rx="4" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+      <rect x="330" y="54" width="112" height="44" rx="9" fill="${B}" stroke="${W}" stroke-width="1.7"/>
+      <ellipse cx="434" cy="76" rx="5" ry="15" fill="none" stroke="${W}" stroke-width="1.3"/>
+      <circle cx="352" cy="76" r="4" fill="url(#preddot)"/>
+    </g>
+    <text class="svg-label" x="320" y="42">FRAME MOUNT</text>
+  </g>
+
+  <!-- comp -->
+  <g class="${show(s.muzzle==='comp')}">
+    <g filter="url(#pglow)">
+      <path fill="${B}" stroke="${O}" d="M566 148 L622 148 Q632 148 632 158 L632 200 Q632 210 622 210 L566 210 Z"/>
+      <rect x="586" y="156" width="9" height="46" fill="${W}"/>
+      ${marks(578,2,24,141,15,7,W,1.5)}
+      <line x1="626" y1="152" x2="626" y2="206" stroke="${W}" stroke-width="1.3"/>
+    </g>
+    <text class="svg-label" x="560" y="130">COMP</text>
+  </g>
+
+  <!-- ported barrel -->
+  <g class="${show(s.muzzle==='ported')}">
+    <g filter="url(#pglow)">
+      <path d="M492 142 L514 142 L510 154 L496 154 Z" fill="${B}" stroke="${W}" stroke-width="1.5"/>
+      <path d="M460 142 L482 142 L478 154 L464 154 Z" fill="${B}" stroke="${W}" stroke-width="1.5"/>
+    </g>
+    <text class="svg-label" x="446" y="126">PORTED</text>
+  </g>
+
+  <!-- magazines -->
+  <g class="${show(s.magazine==='ext')}">
+    <g filter="url(#pglow)">
+      <path fill="${B}" stroke="${W}" stroke-width="1.5" d="M154 415 L248 422 L244 448 L150 440 Z"/>
+    </g>
+    <text class="svg-label" x="150" y="468">EXT 142mm</text>
+  </g>
+  <g class="${show(s.magazine==='stick')}">
+    <g filter="url(#pglow)">
+      <path fill="${B}" stroke="${W}" stroke-width="1.5" d="M156 415 L246 422 L240 470 Q238 478 228 477 L158 470 Q152 468 153 458 Z"/>
+      <circle cx="180" cy="440" r="2.6" fill="${W}"/><circle cx="204" cy="444" r="2.6" fill="${W}"/><circle cx="226" cy="448" r="2.6" fill="${W}"/>
+    </g>
+    <text class="svg-label" x="256" y="452">BIG STICK</text>
+  </g>
+
+  <!-- light / laser -->
+  <g class="${show(s.rail==='light')}">
+    <g filter="url(#pglow)">
+      <rect x="420" y="246" width="64" height="34" rx="7" fill="${B}" stroke="${O}"/>
+      <rect x="482" y="242" width="14" height="42" rx="4" fill="${B}" stroke="${W}" stroke-width="1.5"/>
+      <line x1="428" y1="252" x2="428" y2="274" stroke="${W}" stroke-width="1.2"/>
+      <line x1="474" y1="250" x2="474" y2="276" stroke="${W}" stroke-width="1.2"/>
+    </g>
+    <text class="svg-label" x="416" y="306">LIGHT</text>
+  </g>
+  <g class="${show(s.rail==='laser')}">
+    <g filter="url(#pglow)">
+      <rect x="428" y="246" width="46" height="26" rx="6" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+      <circle cx="470" cy="259" r="3.5" fill="#ff5a4d"/>
+    </g>
+    <line x1="476" y1="259" x2="694" y2="259" stroke="#ff5a4d" stroke-opacity=".8" stroke-width="2" stroke-dasharray="9 8"/>
+    <text class="svg-label" x="420" y="298">LASER</text>
+  </g>
+  </svg>`;
+}
+
+/* ---------------- SHOTGUN — pump gun, stencil style ---------------- */
+function shotgunSVG(){
+  const s = state.shotgun;
+  const tubeLong = (s.capacity!=='nine');
+  const tubeW = tubeLong ? 446 : 270;
+  const showTube = (s.platform!=='boxmag' && s.platform!=='double');
+  return `<svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg">
+  ${defs('s')}
+  <ellipse cx="500" cy="296" rx="420" ry="14" fill="#000" opacity=".45" filter="url(#ssoft)"/>
+
+  <g class="${show(s.platform!=='boxmag')}">
+  <!-- stock (sporting profile w/ grain slashes) -->
+  <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M32 116 Q22 176 28 230 L40 234 Q136 228 178 210 Q222 192 250 190 L250 144 Q180 138 118 128 Q76 120 32 116 Z"/>
+  <path d="M40 120 Q34 176 38 228" stroke="${W}" stroke-width="1.8" fill="none"/>
+  <path d="M84 150 L128 176 L100 168 L142 194" stroke="${W}" stroke-width="2" fill="none" opacity=".9"/>
+  <path d="M92 132 L122 150 M78 196 L116 212" stroke="${W}" stroke-width="1.5" fill="none" opacity=".7"/>
+  <path d="M236 148 Q220 166 214 194" stroke="${W}" stroke-width="1.2" fill="none" opacity=".55"/>
+
+  <!-- receiver -->
+  <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M250 136 L384 136 Q398 138 400 148 L400 190 Q398 200 384 200 L250 200 Z"/>
+  <line x1="254" y1="141" x2="394" y2="141" stroke="${W}" stroke-width="1.6"/>
+  ${marks(258,9,7,145,3,9,W,1)}
+  <rect x="300" y="154" width="70" height="26" rx="5" fill="${B}" stroke="${W}" stroke-width="1.7"/>
+  <ellipse cx="335" cy="167" rx="24" ry="8" fill="none" stroke="${W}" stroke-width="1" opacity=".6"/>
+  <circle cx="268" cy="188" r="3" fill="none" stroke="${W}" stroke-width="1.3"/>
+  <circle cx="378" cy="188" r="3" fill="none" stroke="${W}" stroke-width="1.3"/>
+  <line x1="254" y1="196" x2="396" y2="196" stroke="${W}" stroke-width="1" opacity=".5"/>
+
+  <!-- trigger guard -->
+  <path fill="none" stroke="${W}" stroke-width="13" d="M302 200 L302 224 Q302 232 312 232 L350 232 Q358 227 362 202"/>
+  <path fill="none" stroke="${B}" stroke-width="9.5" d="M302 200 L302 224 Q302 232 312 232 L350 232 Q358 227 362 202"/>
+  <path d="M326 204 Q322 214 324 226" stroke="${W}" stroke-width="2.5" fill="none"/>
+
+  <!-- barrel -->
+  <path fill="${B}" stroke="${O}" d="M400 143 L900 145 L900 155 L400 157 Z"/>
+  <line x1="404" y1="147" x2="896" y2="148" stroke="${W}" stroke-width="1.1" opacity=".7"/>
+  <line x1="408" y1="145" x2="408" y2="156" stroke="${W}" stroke-width="1.3"/>
+  <line x1="402" y1="151" x2="432" y2="151" stroke="${W}" stroke-width="2"/>
+  </g>
+
+  <!-- double-barrel second tube -->
+  <g class="${show(s.platform==='double')}">
+    <g filter="url(#sglow)">
+      <path fill="${B}" stroke="${O}" d="M400 129 L900 131 L900 142 L400 144 Z"/>
+      <line x1="404" y1="133" x2="896" y2="134" stroke="${W}" stroke-width="1.1" opacity=".7"/>
+    </g>
+    <text class="svg-label" x="440" y="118">SECOND BARREL</text>
+  </g>
+
+  <!-- mag tube -->
+  <g class="${show(showTube)}">
+    <rect x="406" y="161" width="${tubeW}" height="16" rx="7" fill="${B}" stroke="${O}"/>
+    <line x1="412" y1="174" x2="${398+tubeW}" y2="174" stroke="${W}" stroke-width="1" opacity=".6"/>
+    <rect x="${402+tubeW}" y="158" width="11" height="22" rx="3" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+  </g>
+  <g class="${show(showTube && tubeLong)}">
+    <g filter="url(#sglow)">
+      <rect x="686" y="161" width="176" height="16" rx="7" fill="${B}" stroke="${W}" stroke-width="1.5"/>
+      <rect x="820" y="140" width="10" height="42" rx="3" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+      ${marks(700,5,28,164,3,10,W,1)}
+    </g>
+    <text class="svg-label" x="690" y="200">${s.capacity==='race' ? 'RACE TUBE / SPEEDLOADER' : 'EXTENDED TUBE (13)'}</text>
+  </g>
+
+  <!-- forend: pump (ribbed) / semi / double -->
+  <g class="${show(s.platform==='pump')}">
+    <rect x="430" y="130" width="132" height="56" rx="14" fill="${B}" stroke="${O}" stroke-width="1.5"/>
+    <line x1="438" y1="140" x2="554" y2="140" stroke="${W}" stroke-width="1.4"/>
+    <line x1="436" y1="150" x2="556" y2="150" stroke="${W}" stroke-width="1.4"/>
+    <line x1="436" y1="160" x2="556" y2="160" stroke="${W}" stroke-width="1.4"/>
+    <line x1="438" y1="170" x2="554" y2="170" stroke="${W}" stroke-width="1.4"/>
+    <line x1="440" y1="179" x2="552" y2="179" stroke="${W}" stroke-width="1.4"/>
+  </g>
+  <g class="${show(s.platform==='semi')}">
+    <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M432 146 L570 146 Q580 162 570 182 L432 182 Q424 164 432 146 Z"/>
+    <line x1="440" y1="154" x2="562" y2="154" stroke="${W}" stroke-width="1.3"/>
+    <line x1="438" y1="172" x2="564" y2="172" stroke="${W}" stroke-width="1.3"/>
+  </g>
+  <g class="${show(s.platform==='double')}">
+    <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M432 148 L540 148 Q548 160 540 176 L432 176 Q426 162 432 148 Z"/>
+    <line x1="440" y1="154" x2="532" y2="154" stroke="${W}" stroke-width="1.2"/>
+  </g>
+
+  <!-- mag-fed shotgun (flat style, per reference) -->
+  <g class="${show(s.platform==='boxmag')}">
+    <path fill="#63686d" d="M44 114 L252 114 L252 150 L232 152 L232 178 L196 192 L118 196 L54 196 L44 186 Z"/>
+    <rect x="140" y="114" width="112" height="36" fill="#565b60"/>
+    <rect x="60" y="128" width="46" height="9" rx="2" fill="#f2f4f5"/>
+    <rect x="150" y="122" width="8" height="42" fill="#f2f4f5" opacity=".9"/>
+    <circle cx="170" cy="172" r="6" fill="#f2f4f5"/>
+    <rect x="200" y="150" width="32" height="10" fill="#3a3d40"/>
+    <rect x="252" y="134" width="52" height="26" fill="#74797d"/>
+    <rect x="298" y="128" width="9" height="36" fill="#565b60"/>
+    <rect x="306" y="116" width="304" height="38" fill="#8b8b82"/>
+    <rect x="330" y="108" width="70" height="9" fill="#565b60"/>
+    <rect x="500" y="108" width="80" height="9" fill="#565b60"/>
+    <rect x="540" y="120" width="26" height="20" fill="#3a3d40"/>
+    <rect x="440" y="124" width="58" height="22" rx="3" fill="#6f746f"/>
+    <path fill="#8f8d80" d="M306 154 L500 154 L500 198 L468 202 L420 198 L330 198 Q306 196 306 174 Z"/>
+    <circle cx="318" cy="166" r="4" fill="#565b60"/><circle cx="484" cy="164" r="4" fill="#565b60"/>
+    <path d="M352 160 L370 156" stroke="#565b60" stroke-width="3"/>
+    <path fill="#8f8d80" d="M330 198 Q360 196 364 204 Q362 216 352 222 L334 274 Q330 286 314 284 L300 278 Q306 234 320 204 Q322 198 330 198 Z"/>
+    <path fill="none" stroke="#3a3d40" stroke-width="9" d="M374 200 L374 216 Q374 224 384 224 L418 224 Q426 220 430 202"/>
+    <path d="M398 202 Q394 210 396 218" stroke="#3a3d40" stroke-width="3" fill="none"/>
+    <path fill="#5d6165" d="M436 200 L548 198 L556 240 Q562 288 542 314 L450 306 Q434 260 436 200 Z"/>
+    <path d="M440 240 Q498 250 556 242 M444 274 Q500 286 550 278" stroke="#4a4e52" stroke-width="3" fill="none"/>
+    <path fill="#74797d" d="M448 304 L544 312 L540 328 L444 320 Z"/>
+    <path fill="#85857b" d="M610 110 L862 120 L862 150 L610 156 Z"/>
+    <rect x="660" y="102" width="150" height="9" fill="#565b60"/>
+    ${[0,1,2,3].map(i=>`<circle cx="${618+i*13}" cy="133" r="3" fill="#f2f4f5"/>`).join('')}
+    ${[0,1,2,3].map(i=>`<g><rect x="${672+i*48}" y="127" width="22" height="5" rx="2.5" fill="#3a3d40"/><circle cx="${694+i*48}" cy="129.5" r="2.2" fill="#f2f4f5"/><rect x="${672+i*48}" y="140" width="22" height="5" rx="2.5" fill="#3a3d40"/><circle cx="${672+i*48}" cy="142.5" r="2.2" fill="#f2f4f5"/></g>`).join('')}
+    <rect x="862" y="140" width="38" height="14" fill="#4a4e52"/>
+  </g>
+
+  <!-- bead -->
+  <g class="${show(s.optic==='bead')}">
+    <rect x="884" y="136" width="9" height="7" fill="${B}" stroke="${W}" stroke-width="1.2"/>
+    <circle cx="888" cy="132" r="3.5" fill="${W}"/>
+  </g>
+
+  <!-- red dot -->
+  <g class="${show(s.optic==='dot')}">
+    <g filter="url(#sglow)">
+      <rect x="270" y="118" width="88" height="14" rx="2" fill="${B}" stroke="${O}"/>
+      ${marks(278,6,13,121,5,8,W,1)}
+      <rect x="278" y="76" width="80" height="42" rx="10" fill="${B}" stroke="${W}" stroke-width="1.8"/>
+      <circle cx="340" cy="97" r="14" fill="${B}" stroke="${W}" stroke-width="2"/>
+      <circle cx="340" cy="97" r="8" fill="none" stroke="${W}" stroke-width="1" opacity=".7"/>
+      <circle cx="340" cy="97" r="3" fill="url(#sreddot)"/>
+      <rect x="290" y="80" width="10" height="5" fill="${W}"/>
+    </g>
+    <text class="svg-label" x="268" y="64">RED DOT</text>
+  </g>
+
+  <!-- magnified -->
+  <g class="${show(s.optic==='mag')}">
+    <g filter="url(#sglow)">
+      <rect x="264" y="118" width="100" height="8" fill="${B}" stroke="${O}"/>
+      <rect x="252" y="90" width="118" height="20" rx="8" fill="${B}" stroke="${W}" stroke-width="1.6"/>
+      <rect x="226" y="84" width="28" height="30" rx="6" fill="${B}" stroke="${W}" stroke-width="1.5"/>
+      <path fill="${B}" stroke="${W}" stroke-width="1.5" d="M370 86 L408 79 Q415 100 408 121 L370 114 Z"/>
+      <ellipse cx="409" cy="100" rx="4" ry="17" fill="none" stroke="${W}" stroke-width="1.2"/>
+    </g>
+    <text class="svg-label" x="250" y="70">MAGNIFIED OPTIC</text>
+  </g>
+
+  <!-- comp -->
+  <g class="${show(s.muzzle==='comp')}">
+    <g filter="url(#sglow)">
+      <path fill="${B}" stroke="${O}" d="M900 138 L948 138 Q956 138 956 146 L956 152 Q956 160 948 160 L900 160 Z"/>
+      <rect x="912" y="141" width="7" height="16" fill="${W}"/><rect x="930" y="141" width="7" height="16" fill="${W}"/>
+      ${marks(908,3,14,131,7,5,W,1)}
+    </g>
+    <text class="svg-label" x="884" y="120">COMP / PORTED</text>
+  </g>
+
+  <!-- bipod -->
+  <g class="${show(s.support==='bipod20')}">
+    <g filter="url(#sglow)">
+      <rect x="596" y="177" width="20" height="11" fill="${B}" stroke="${W}" stroke-width="1.3"/>
+      <line x1="603" y1="188" x2="576" y2="258" stroke="${B}" stroke-width="7"/>
+      <line x1="609" y1="188" x2="636" y2="258" stroke="${B}" stroke-width="7"/>
+      <line x1="603" y1="188" x2="576" y2="258" stroke="${W}" stroke-width="1.5"/>
+      <line x1="609" y1="188" x2="636" y2="258" stroke="${W}" stroke-width="1.5"/>
+    </g>
+    <text class="svg-label" x="570" y="280">BIPOD ≤20"</text>
+  </g>
+
+  <!-- light / laser -->
+  <g class="${show(s.rail==='light')}">
+    <g filter="url(#sglow)">
+      <rect x="636" y="150" width="8" height="34" rx="3" fill="${B}" stroke="${W}" stroke-width="1.2"/>
+      <rect x="618" y="184" width="46" height="20" rx="6" fill="${B}" stroke="${O}"/>
+      <rect x="662" y="181" width="11" height="26" rx="3" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+    </g>
+    <text class="svg-label" x="614" y="230">LIGHT</text>
+  </g>
+  <g class="${show(s.rail==='laser')}">
+    <g filter="url(#sglow)">
+      <rect x="636" y="150" width="8" height="34" rx="3" fill="${B}" stroke="${W}" stroke-width="1.2"/>
+      <rect x="622" y="184" width="40" height="17" rx="5" fill="${B}" stroke="${W}" stroke-width="1.4"/>
+      <circle cx="658" cy="192" r="3.2" fill="#ff5a4d"/>
+    </g>
+    <line x1="664" y1="192" x2="990" y2="192" stroke="#ff5a4d" stroke-opacity=".8" stroke-width="2" stroke-dasharray="9 8"/>
+    <text class="svg-label" x="616" y="226">LASER</text>
+  </g>
+  </svg>`;
+}
+
+/* label style used inside svgs */
+const style = document.createElement('style');
+style.textContent = `.svg-label{font-family:${getComputedStyle(document.documentElement).getPropertyValue('--mono')}; font-size:11px; fill:#f0b350; opacity:.85; letter-spacing:1.5px;} .hidden{display:none;}`;
+document.head.appendChild(style);
+
+/* boot */
+renderAll();
+</script>
+</body>
+</html>
