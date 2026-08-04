@@ -190,6 +190,11 @@
     .gun-wrap{width:78vw;}
   }
 
+  .stage.three .wires{display:none;}
+  .gl-holder{width:100%; height:min(58vh, 540px); position:relative;}
+  .stage.three .gun-wrap{pointer-events:auto;}
+  button.act.view3d{margin-top:12px; width:auto; padding:9px 20px;}
+
   /* ============ MOBILE / NARROW LAYOUT ============ */
   @media (max-width: 840px){
     .stage{display:flex; flex-direction:column; height:auto; min-height:0; overflow:visible; padding:12px 12px 30px;}
@@ -214,6 +219,7 @@
     header .flag{display:none;}
     .match-pill{padding:4px 10px;}
     .match-pill .v{font-size:12px;}
+    .gl-holder{height:320px;}
   }
 </style>
 </head>
@@ -240,6 +246,7 @@
 <div class="screen" id="screen-pistol"></div>
 <div class="screen" id="screen-shotgun"></div>
 
+<script src="fmg-3d.js" defer></script>
 <script>
 /* =====================================================================
    OPTIONAL EXTERNAL RENDERS — drop in files from another program.
@@ -250,13 +257,14 @@
       layers toggle with the same option ids used by the rules engine.
    Leave empty to use the built-in vector renders.
    ===================================================================== */
-const MODELS = { rifle:'', pistol:'', shotgun:'' };            // e.g. rifle:'models/rifle.glb'
+const MODELS = { rifle:'rifle.glb', pistol:'pistol.glb', shotgun:'' };
+const SHOTGUN_MODELS = { pump:'sg-pump.glb', semi:'sg-semi.glb', boxmag:'sg-magfed.glb', double:'' };
+const modelFor = w => w==='shotgun' ? SHOTGUN_MODELS[state.shotgun.platform] : MODELS[w];
 const IMAGES = {                                               // e.g. rifle:{ base:'img/rifle.png', overlays:{ optic:{ dot:'img/rifle-dot.png' } } }
   rifle:{ base:'', overlays:{} },
   pistol:{ base:'', overlays:{} },
   shotgun:{ base:'', overlays:{} }
 };
-const MODEL_VIEWER_CDN = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js';
 
 /* =====================================================================
    RULES DATA — per-division legality. tac/mod: true = legal,
@@ -417,6 +425,7 @@ const state = {};
 for (const w in WEAPONS){ state[w] = {}; WEAPONS[w].slots.forEach(s => state[w][s.id] = s.opts[0].id); }
 const openViol = { rifle:null, pistol:null, shotgun:null };
 const openSlot = { rifle:null, pistol:null, shotgun:null };
+const mode3d = { rifle:false, pistol:false, shotgun:false };
 
 function getOpt(w, slotId){
   const slot = WEAPONS[w].slots.find(s => s.id === slotId);
@@ -469,9 +478,8 @@ function pillRow(o){
 }
 
 function gunStage(w){
-  if (MODELS[w]){
-    loadModelViewer();
-    return `<model-viewer src="${MODELS[w]}" camera-controls auto-rotate shadow-intensity="1" exposure="1.05"></model-viewer>`;
+  if (mode3d[w] && modelFor(w) && window.FMG3D){
+    return `<div class="gl-holder" id="gl-${w}"></div>`;
   }
   const img = IMAGES[w];
   if (img && img.base){
@@ -488,6 +496,7 @@ function gunStage(w){
 function renderScreen(w){
   const c = classify(w);
   const el = document.getElementById('screen-'+w);
+  if (window.FMG3D) FMG3D.dispose(w);
   const wcfg = WEAPONS[w];
 
   const wires = wcfg.slots.map(s => {
@@ -539,7 +548,7 @@ function renderScreen(w){
       <div class="st-bar"><i style="width:${ok?100:Math.max(8, 100-34*c[d].viol.length)}%"></i></div>`;
   }).join('');
 
-  el.innerHTML = `<div class="stage">
+  el.innerHTML = `<div class="stage ${mode3d[w] && modelFor(w) && window.FMG3D ? 'three' : ''}">
     <svg class="wires" viewBox="0 0 100 100" preserveAspectRatio="none">${wires}</svg>
     <div class="gun-wrap" id="gunwrap-${w}">${gunStage(w)}</div>
     ${nodes}
@@ -551,6 +560,7 @@ function renderScreen(w){
         ${c.goofy?'<div class="flag on">GOOFY GUN CANDIDATE</div>':''}
         ${c.heavy?'<div class="flag on">HEAVY CALIBER</div>':''}
       </div>
+      ${modelFor(w) && window.FMG3D ? `<div><button class="act ghost view3d clip-sm" onclick="toggle3D('${w}')">${mode3d[w] ? '◄ VIEW DIAGRAM' : 'VIEW IN 3D'}</button></div>` : ''}
     </div>
     <div class="stats clip-sm">
       <h3>Division Eligibility — ${wcfg.label}</h3>
@@ -563,8 +573,12 @@ function renderScreen(w){
     </div>
     ${viol}
     ${flyout}
-    <footer>Rules: <a href="https://www.floridamultigun.com/divisions" target="_blank" rel="noopener">floridamultigun.com/divisions</a> — silent items resolved permissively; Match Director makes final equipment calls.</footer>
+    <footer>Rules: <a href="https://www.floridamultigun.com/divisions" target="_blank" rel="noopener">floridamultigun.com/divisions</a> — silent items resolved permissively; Match Director makes final equipment calls.<br>
+    3D models <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY-4.0</a> via Sketchfab: <a href="https://sketchfab.com/3d-models/ar-15-model-90db6d4c7f0348e8a878b02b31783b69" target="_blank" rel="noopener">"AR 15 Model" by Desant_Art</a> · <a href="https://sketchfab.com/3d-models/jurassic-the-hunted-g18-7d716ea646dd4e969d8f5a04e0723bf3" target="_blank" rel="noopener">"Jurassic: The Hunted G18" by Barcelo</a> · <a href="https://sketchfab.com/3d-models/shotgun-bfbd8edb727846d89e25f797c202437f" target="_blank" rel="noopener">"Shotgun" by MKoegler3D</a> · <a href="https://sketchfab.com/3d-models/beretta-1301-shotgun-f4d6c5de774b45f2834ac6ec2c74f579" target="_blank" rel="noopener">"Beretta 1301 shotgun" by 2003926yzy</a> · <a href="https://sketchfab.com/3d-models/low-poly-genesis-arms-gen-12-5b625c44b23543149936bafa776b8d68" target="_blank" rel="noopener">"Low-Poly Genesis Arms Gen 12" by TastyTony</a></footer>
   </div>`;
+  if (mode3d[w] && window.FMG3D && modelFor(w)){
+    FMG3D.mount(w, document.getElementById('gl-'+w), modelFor(w));
+  }
 }
 
 function renderHeader(){
@@ -608,12 +622,7 @@ function copyLoadout(){
     setTimeout(()=>document.querySelectorAll('.copied').forEach(c=>c.classList.remove('show')), 1800);
   });
 }
-let mvLoaded = false;
-function loadModelViewer(){
-  if (mvLoaded) return; mvLoaded = true;
-  const s = document.createElement('script'); s.type = 'module'; s.src = MODEL_VIEWER_CDN;
-  document.head.appendChild(s);
-}
+function toggle3D(w){ mode3d[w] = !mode3d[w]; renderScreen(w); }
 
 /* =====================================================================
    BUILT-IN WEAPON RENDERS — vector-stencil style: solid black
@@ -1169,6 +1178,7 @@ document.head.appendChild(style);
 
 /* boot */
 renderAll();
+window.addEventListener('load', () => { if (window.FMG3D) renderAll(); });
 </script>
 </body>
 </html>
