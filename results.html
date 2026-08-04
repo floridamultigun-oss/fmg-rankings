@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Florida Multigun — Match Results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#111111;
+    --muted:#76746f;
+    --line:#e6e4df;
+    --accent:#b3202c;
+    --gold:#c9a227;
+    --silver:#9aa0a6;
+    --bronze:#b0793f;
+    --card:#fafaf8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#ffffff;color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:8px 20px 60px}
+  .yearnav{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px 0 26px;position:sticky;top:0;background:rgba(255,255,255,.96);z-index:5;border-bottom:1px solid var(--line)}
+  .yearnav a{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.06em;color:var(--ink);text-decoration:none;padding:4px 16px;border:1px solid var(--line);border-radius:999px;line-height:1.2}
+  .yearnav a:hover{border-color:var(--accent);color:var(--accent)}
+  .yearhead{font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:.08em;margin:44px 0 4px;text-transform:uppercase;scroll-margin-top:70px}
+  .yearhead span{color:var(--accent)}
+  .yearsub{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 20px 16px;display:flex;flex-direction:column}
+  .card:hover{border-color:#cfcdc7}
+  .date{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.05em;line-height:1;text-transform:uppercase}
+  .tag{display:inline-block;margin-top:8px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:var(--accent);border-radius:3px;padding:3px 8px;align-self:flex-start}
+  .divs{margin-top:14px;flex:1}
+  .div{padding:9px 0;border-top:1px solid var(--line)}
+  .divname{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .pl{list-style:none}
+  .pl li{font-size:14px;font-weight:500;padding:1.5px 0;display:flex;align-items:baseline;gap:8px}
+  .pl .n{font-family:'Bebas Neue',sans-serif;font-size:14px;width:14px;flex:none;text-align:center}
+  .pl li:nth-child(1) .n{color:var(--gold)}
+  .pl li:nth-child(2) .n{color:var(--silver)}
+  .pl li:nth-child(3) .n{color:var(--bronze)}
+  .fr{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+  .fr a{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);text-decoration:none}
+  .fr a:hover{color:var(--accent)}
+  .fr a::after{content:" \2192"}
+  .foot{margin-top:52px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+  @media (max-width:720px){ .grid{grid-template-columns:1fr} .yearhead{font-size:36px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="yearnav" id="yearnav"></nav>
+  <main id="content"></main>
+  <p class="foot">Every score, every stage, every shooter — full breakdowns live on PractiScore.<br>
+  Results update after each match. Divisions vary by match format.</p>
+</div>
+<script>
+// Florida Multigun — complete match results data
+// To add a new match, copy the top entry, update the fields, and re-upload results.html.
+const MATCHES = [
+  { date: "2026-07-11", label: "3 Gun", url: "https://practiscore.com/results/all/9ae3a6ab-7172-4172-a9a2-1b6fdb73b3ea", divs: [
+    ["Modified", ["Joe Easter", "Christian Saley", "John Reid"]],
+    ["Open", ["Joe Clemmons", "Kevin Yantosh", "Andrew Plate"]],
+    ["Tac Ops", ["Michael Holland", "Zak Farrow", "Manuel Montes De Oca"]],
+    ["Limited", ["Craig Pettitt"]] ]},
+  { date: "2026-06-13", label: "3 Gun", url: "https://practiscore.com/results/all/e8f7a942-32e8-4a78-b659-42d0851818c8", divs: [
+    ["Open", ["Kevin Yantosh", "Joe Clemmons", "Tony Maladra"]],
+    ["Modified", ["Christian Saley", "Ray Chirnside", "Robert Schwartz"]],
+    ["Tac Ops", ["Michael Holland", "Ricky Ricardo", "Vasily Puchalsky"]] ]},
+  { date: "2026-05-09", label: "3 Gun + Heavy Metal", url: "https://practiscore.com/results/all/6b01da93-c283-453f-b6fb-b67bec958e76", divs: [
+    ["Open", ["Christian Saley", "Joe Easter", "Stephen Ward"]],
+    ["Modified", ["Ray Chirnside", "Chris Morcillo", "Lincoln Salvador"]],
+    ["Tac Ops", ["Andrew Miller", "Geoffrey Paul", "Michael Holland"]],
+    ["Heavy Metal", ["John Reid", "Bob Toner", "Scot Goettsch"]] ]},
+  { date: "2026-04-11", label: "3 Gun", url: "https://practiscore.com/results/all/83cbf2ed-6076-4e8c-993e-aefacab4f435", divs: [
+    ["Open", ["Scott Lindauer", "Stephen Hansen", "Jacob Molner"]],
+    ["Modified", ["John Reid", "Mike Casesa", "Nick Edwards"]],
+    ["Tac Ops", ["Joe Clemmons", "Geoffrey Paul", "Kyle Louis"]],
+    ["Limited", ["Ryan Wade", "Demetrios Nanos"]] ]},
+  { date: "2026-03-14", label: "3 Gun", url: "https://practiscore.com/results/all/00eef32f-710f-490f-b23f-1b8446fd86ab", divs: [
+    ["Open", ["Kristen Tricarico", "Tony Maladra", "Harry Christian"]],
+    ["Modified", ["John Reid", "Ray Chirnside", "Daniel Callahan"]],
+    ["Tac Ops", ["Tim Grey", "Geoffrey Paul", "Kyle Louis"]],
+    ["Limited", ["Matthew Porter", "Paul Davis", "Stefan Roggendorf"]] ]},
+  { date: "2026-02-14", label: "3 Gun + Goofy Gun", url: "https://practiscore.com/results/all/21042b11-3df2-4d64-b813-f1a64b9d958e", divs: [
+    ["Open", ["Daniel Callahan", "Kevin Yantosh", "Bob Mcinnis"]],
+    ["Modified", ["John Reid", "Ray Chirnside", "Mike Casesa"]],
+    ["Tac Ops", ["Kyle Louis", "Tim Grey", "Adam Seidel"]],
+    ["Limited", ["Matthew Porter", "Kristian Roggendorf"]],
+    ["Goofy Gun", ["Spencer Simon", "Robert Schwartz", "Geoffrey Paul"]] ]},
+  { date: "2025-12-13", label: "3 Gun — Christmas Match", url: "https://practiscore.com/results/all/9a7d3c2f-a203-404b-b158-cd69d3c6b012", divs: [
+    ["Open", ["Kevin Yantosh", "Bob Mcinnis", "Timothy Grey"]],
+    ["Modified", ["John Reid", "Ray Chirnside", "Colby Allen"]],
+    ["Tac Ops", ["Joe Clemmons", "Brian Seidel", "Adam Seidel"]],
+    ["Limited", ["Matthew Porter", "Rick Pluta"]] ]},
+  { date: "2025-11-08", label: "3 Gun", url: "https://practiscore.com/results/all/4c8f260a-06a0-4738-8e9b-c96f821b1257", divs: [
+    ["Open", ["Kevin Yantosh", "Kristen Tricarico", "Andrew Plate"]],
+    ["Modified", ["Ray Chirnside", "Edward Lee", "Mike Casesa"]],
+    ["Tac Ops", ["Joe Clemmons", "Adam Seidel", "Geoffrey Paul"]],
+    ["Limited", ["Larry Nossen"]] ]},
+  { date: "2025-10-11", label: "3 Gun — Halloween + AK Division", url: "https://practiscore.com/results/all/3f661b14-e6f2-472f-85d2-2b850705e94c", divs: [
+    ["Open", ["Stephen Ward", "Kristen Tricarico", "Kam Sandhu"]],
+    ["Modified", ["John Reid", "Ray Chirnside", "Mike Casesa"]],
+    ["Tac Ops", ["Joe Clemmons", "Geoffrey Paul", "Kyle Louis"]],
+    ["AK Division", ["Jacob Molner", "Timothy Grey", "Adam Seidel"]],
+    ["Limited", ["Kristian Roggendorf"]] ]},
+  { date: "2025-09-13", label: "3 Gun", url: "https://practiscore.com/results/all/ae06c137-20d3-4011-a389-f5c13bd10fa9", divs: [
+    ["Open", ["Stephen Ward", "Kevin Yantosh", "Christian Saley"]],
+    ["Modified", ["Ray Chirnside", "Mike Casesa", "Edward Lee"]],
+    ["Tac Ops", ["Brian Seidel", "Joe Clemmons", "Adam Seidel"]] ]},
+  { date: "2025-08-09", label: "3 Gun + Heavy Division", url: "https://practiscore.com/results/all/e487db52-d626-4249-9b11-b5047e4d5996", divs: [
+    ["Open", ["Kevin Yantosh", "Steve Trafton", "Christian Saley"]],
+    ["Modified", ["Ray Chirnside", "Howard Hall", "Daniel Callahan"]],
+    ["Tac Ops", ["Kyle Louis", "Paul Davis", "Ryan Wade"]],
+    ["Heavy", ["John Reid", "Jacob Molner", "Geoffrey Paul"]],
+    ["Limited", ["Spencer Simon", "Rick Pluta"]] ]},
+  { date: "2025-06-14", label: "3 Gun", url: "https://practiscore.com/results/all/c206d054-064f-4932-8b79-52e6e9ad4c5d", divs: [
+    ["Open", ["Kevin Yantosh", "Joe Easter", "Christian Saley"]],
+    ["Modified", ["Ray Chirnside", "Daniel Callahan", "Mike Casesa"]],
+    ["Tac Ops", ["Joe Clemmons", "Geoffrey Paul", "Colby Allen"]] ]},
+  { date: "2025-04-12", label: "3 Gun + Goofy Gun", url: "https://practiscore.com/results/all/e0fed110-34bf-49ae-b1e7-ec5c4d6a8beb", divs: [
+    ["Open", ["Kristen Tricarico", "Segismond (Joey) Araniego", "Gabriel Schiffner"]],
+    ["Modified", ["John Reid", "Ray Chirnside", "Daniel Callahan"]],
+    ["Tac Ops", ["Geoffrey Paul", "Stephen Beier", "Matthew Porter"]],
+    ["Goofy Gun", ["Jacob Molner", "Xavier Garcia Jr", "Brian Seidel"]] ]},
+  { date: "2025-03-22", label: "2 Gun / PCC + PRS Stage", url: "https://practiscore.com/results/all/e15bcad1-d913-4f39-ab34-e69f4cbc0b03", divs: [
+    ["2 Gun", ["John Reid", "Tim Grey", "Adam Seidel"]],
+    ["PCC", ["Ray Chirnside", "Shine Taylor", "Colby Allen"]] ]},
+  { date: "2025-03-08", label: "3 Gun + AK Division", url: "https://practiscore.com/results/all/abafa53b-946c-48e8-b8a6-3b7e01304fc5", divs: [
+    ["Open", ["Kevin Yantosh", "Joe Clemmons", "Adam Seidel"]],
+    ["Modified", ["John Reid", "Scott Lindauer", "Robert Devore"]],
+    ["Tac Ops", ["Stephen Beier", "Geoffrey Paul", "Kyle Louis"]],
+    ["AK Division", ["Ray Chirnside", "Jacob Molner", "Daniel Callahan"]],
+    ["Limited", ["Warren Mostrom", "John Wasil"]] ]},
+  { date: "2025-02-08", label: "3 Gun", url: "https://practiscore.com/results/all/820a21b5-56ee-4ee1-a921-f77c07289d81", divs: [
+    ["Open", ["Joe Clemmons", "Shine Taylor", "Kevin Yantosh"]],
+    ["Modified", ["John Reid", "Daniel Callahan", "Mike Casesa"]],
+    ["Tac Ops", ["Ray Chirnside", "Kyle Louis", "Geoffrey Paul"]],
+    ["Limited", ["Kristian Roggendorf"]] ]},
+  { date: "2025-01-09", label: "3 Gun State Championship", url: "https://practiscore.com/results/all/cc5c841f-973b-4828-9589-89c29548c059", divs: [
+    ["Open", ["Joe Farewell", "Lee Pulley", "James Gill"]],
+    ["Modified", ["Chuck Lowe", "Andrew McCallister", "JK Khan"]],
+    ["Tac Ops", ["Jeremy Lightner", "Colby Allen", "Ray Chirnside"]],
+    ["Ladies", ["Tina Garcia", "Kristen Tricarico", "Katrina Reed"]] ]},
+  { date: "2024-12-14", label: "3 Gun — Christmas Match", url: "https://practiscore.com/results/all/f878366b-1fc0-48eb-a2d2-f581e8056974", divs: [
+    ["Open", ["Joe Easter", "Rj Mcinnis", "Jacob Molner"]],
+    ["Carry Optics", ["John Reid", "Shine Taylor", "Daniel Callahan"]],
+    ["Tac Ops", ["Ray Chirnside", "Colby Allen", "Matthew Porter"]],
+    ["Limited", ["Bryce Smith", "Kristian Roggendorf", "Lucas Buckeye"]] ]},
+  { date: "2024-11-30", label: "3 Gun / 2 Gun / PCC", url: "https://practiscore.com/results/all/6890c8a8-b4ea-4b0e-a4c7-3c0fa36aa6c4", divs: [
+    ["3 Gun — Open", ["Xavier Garcia Jr", "Joe Clemmons", "Adam Seidel"]],
+    ["3 Gun — Carry Optics", ["John Reid", "Justin Larsen", "Colin Reid"]],
+    ["2 Gun", ["Jacob Molner", "Nick Sprague", "Matt Weeks"]],
+    ["PCC", ["Ray Chirnside", "Colby Allen", "Mike Casesa"]] ]},
+  { date: "2024-11-09", label: "3 Gun", url: "https://practiscore.com/results/all/f0309baf-7a30-4cce-b003-a40eda5bf620", divs: [
+    ["Open", ["Kevin Yantosh", "Joe Clemmons", "Kristen Tricarico"]],
+    ["Carry Optics", ["John Reid", "Justin Larsen", "Mike Casesa"]],
+    ["Tac Ops", ["Geoffrey Paul", "Adam Whitston", "Colby Allen"]],
+    ["Limited", ["Kristian Roggendorf"]] ]},
+  { date: "2024-09-14", label: "3 Gun + Goofy Gun", url: "https://practiscore.com/results/all/63a8eda8-2f6f-4253-8726-343bee9aa88d", divs: [
+    ["Open", ["Kevin Yantosh", "Daniel Crowley", "Christian Saley"]],
+    ["Carry Optics", ["Jeremy Lightner", "Daniel Callahan", "Justin Larsen"]],
+    ["Tac Ops", ["Ray Chirnside", "James Shirey", "Matthew Porter"]],
+    ["Goofy Gun", ["Darrell Hartgraves", "Kevin Christner"]],
+    ["Limited", ["Michael Cooper"]] ]},
+  { date: "2024-08-31", label: "3 Gun / 2 Gun / PCC", url: "https://practiscore.com/results/all/de42eaa8-0109-41f1-9af8-8b616b9476dc", divs: [
+    ["3 Gun — Open", ["Harry Christian"]],
+    ["3 Gun — Carry Optics", ["Justin Larsen", "Scott Lindauer", "Robert Schwartz"]],
+    ["3 Gun — Tac Ops", ["Joe Easter", "Ray Chirnside"]],
+    ["2 Gun", ["Joe Clemmons", "Daniel Callahan", "Tim Grey"]],
+    ["PCC", ["Mike Casesa", "Robert Devore", "Paul Davis"]] ]},
+  { date: "2024-08-10", label: "3 Gun", url: "https://practiscore.com/results/all/fa74a068-066e-4a9b-ba63-7ffcb3f861e1", divs: [
+    ["Open", ["Kevin Yantosh", "Joe Clemmons", "Shine Taylor"]],
+    ["Carry Optics", ["JK Khan", "Mike Casesa", "Justin Larsen"]],
+    ["Tac Ops", ["Jeremy Lightner", "Robert Devore", "Colby Allen"]],
+    ["Limited", ["Geoffrey Paul", "William Stone", "Rich Harrison"]] ]},
+  { date: "2024-07-13", label: "3 Gun", url: "https://practiscore.com/results/all/f3d5cd26-9af1-4ab9-b4fb-dba8d4c2fe6d", divs: [
+    ["Open", ["Kevin Yantosh", "Shine Taylor", "Daniel Crowley"]],
+    ["Carry Optics", ["Mike Casesa", "Justin Larsen", "Ray Chirnside"]],
+    ["Tac Ops", ["Colby Allen", "Matthew Porter", "James Mennuti"]],
+    ["Tac Open", ["Paul Davis", "Nathan Storey"]],
+    ["Limited", ["Geoffrey Paul", "Warren Mostrom", "Blake Melhuish"]] ]},
+  { date: "2024-06-29", label: "2 Gun / PCC", url: "https://practiscore.com/results/all/e8d7d432-13c6-4348-aa79-19b0c1344d80", divs: [
+    ["2 Gun — Carbine", ["Joe Easter", "John Reid", "Daniel Crowley"]],
+    ["2 Gun — Bolt Action", ["Harry Christian", "Greg Brandau", "Wes Jenkins"]],
+    ["PCC — Carbine", ["Robert Devore", "Andrew Plate", "Geoffrey Paul"]],
+    ["PCC — Bolt Action", ["Shine Taylor", "Blake Melhuish"]] ]},
+  { date: "2024-06-08", label: "3 Gun", url: "https://practiscore.com/results/all/ace8280a-c9ad-4d6c-8187-670443bd1424", divs: [
+    ["Open", ["Joe Clemmons", "Daniel Crowley", "Christian Saley"]],
+    ["Carry Optics", ["John Reid", "Ray Chirnside", "Mike Casesa"]],
+    ["Tac Optics", ["Colby Allen", "Matthew Porter", "Jason Easton"]],
+    ["Limited", ["Geoffrey Paul", "Rue Kindred", "Barry Campbell"]] ]},
+  { date: "2024-05-11", label: "3 Gun", url: "https://practiscore.com/results/all/aef4c1f3-4d1e-4fd5-973f-80d7664e6bc2", divs: [
+    ["Open", ["Shine Taylor", "Kevin Yantosh", "Daniel Crowley"]],
+    ["Carry Optics", ["John Reid", "Xavier Garcia Jr", "Mike Casesa"]],
+    ["Tac Optics", ["Jeremy Lightner", "James Shirey", "Ray Chirnside"]],
+    ["Limited", ["Ashton Hammond", "Geoffrey Paul", "Nicholas Edwards"]] ]},
+  { date: "2024-04-13", label: "3 Gun + Goofy Gun", url: "https://practiscore.com/results/all/1884160a-d5b1-4ee6-ac2b-1e1ef268aa7e", divs: [
+    ["Open", ["Kevin Yantosh", "Daniel Crowley", "Bob Mcinnis"]],
+    ["Carry Optics", ["John Reid", "Mike Casesa", "Joe Clemmons"]],
+    ["Tac Optics", ["Geoffrey Paul", "Matthew Porter", "Nick Goodarzi"]],
+    ["Goofy Gun", ["Robert Falls"]] ]},
+  { date: "2024-03-30", label: "2 Gun / PCC", url: "https://practiscore.com/results/all/5f95566b-8b5f-4a7d-a59a-70ea851e7d73", divs: [
+    ["2 Gun — Carbine", ["Joe Farewell", "John Reid", "Joe Easter"]],
+    ["2 Gun — Bolt Action", ["Mike Kolb", "Judson Forman", "Wes Jenkins"]],
+    ["PCC — Carbine", ["Mike Casesa", "Robert Devore", "Xavier Garcia Jr"]],
+    ["PCC — Bolt Action", ["Shine Taylor", "Nick Sprague"]] ]},
+  { date: "2024-03-09", label: "3 Gun", url: "https://practiscore.com/results/all/b0f93281-ae47-423c-93ac-cda326a32c4b", divs: [
+    ["Open", ["Robert J Mcinnis", "David DeAntoneo", "Max Panchenko"]],
+    ["Carry Optics", ["John Reid", "Robert Devore", "Austin Mcinnis"]],
+    ["Tac Optics", ["Colby Allen", "Ray Chirnside", "Chris Morcillo"]] ]},
+  { date: "2024-02-10", label: "3 Gun + AK Division", url: "https://practiscore.com/results/all/f1be620a-d191-4ddb-9cd7-c6955cde2b05", divs: [
+    ["Open", ["Shine Taylor", "Daniel Crowley", "Robert Mcinnis"]],
+    ["Carry Optics", ["John Reid", "Justin Larsen", "Mike Casesa"]],
+    ["Tac Optics", ["Ray Chirnside", "Geoffrey Paul", "Matthew Porter"]],
+    ["AK Division", ["Jacob Molner", "Adam Seidel", "Colby Allen"]] ]},
+  { date: "2024-01-13", label: "3 Gun", url: "https://practiscore.com/results/all/7231617a-fbd5-4474-bcb8-5f2b677c6b80", divs: [
+    ["Open", ["Shine Taylor", "Kevin Yantosh", "Robert Mcinnis"]],
+    ["Carry Optics", ["John Reid", "Daniel Callahan", "Mike Casesa"]],
+    ["Tac Optics", ["Ray Chirnside", "Joe Clemmons", "Colby Allen"]],
+    ["Limited", ["Adam Seidel"]] ]},
+  { date: "2023-12-30", label: "2 Gun / PCC", url: "https://practiscore.com/results/new/229439", divs: [
+    ["2 Gun Open", ["John Reid", "Jeff Marshall", "Ryan Wade"]],
+    ["2 Gun Tac", ["Ray Chirnside", "Jacob Molner", "Joe Clemmons"]],
+    ["PCC Open", ["Shine Taylor", "Nick Sprague", "Adam Seidel"]],
+    ["PCC Tac", ["Joey Araniego", "Mike Casesa", "Paul Davis"]] ]},
+  { date: "2023-12-09", label: "3 Gun", url: "https://practiscore.com/results/new/227903", divs: [
+    ["Open", ["Shine Taylor", "David DeAntoneo", "Nick Sprague"]],
+    ["Carry Optics", ["John Reid", "Mike Casesa", "Bob Devore"]],
+    ["Tactical", ["Joe Clemmons", "Ray Chirnside", "Geoffrey Paul"]],
+    ["Limited", ["Brad Atwood", "Nick Edwards"]] ]},
+  { date: "2023-11-11", label: "3 Gun", url: "https://practiscore.com/results/new/225593", divs: [
+    ["Open", ["David DeAntoneo", "Nick Sprague", "Timothy Grey"]],
+    ["Carry Optics", ["John Reid", "Mike Casesa", "Bob Devore"]],
+    ["Tactical", ["Colby Allen", "Ray Chirnside", "Geoffrey Paul"]] ]},
+  { date: "2023-10-14", label: "3 Gun", url: "https://practiscore.com/results/new/222024", divs: [
+    ["Open", ["Timothy Grey", "David DeAntoneo", "Jacob Molner"]],
+    ["Carry Optics", ["Joe Clemmons", "Mike Casesa", "Jason Easton"]],
+    ["Tactical", ["Bob Devore", "Geoffrey Paul", "Kyle Louis"]] ]},
+  { date: "2023-09-30", label: "2 Gun / PCC", url: "https://practiscore.com/results/new/220386", divs: [
+    ["2 Gun Open", ["Nick Sprague", "Joe Clemmons", "David DeAntoneo"]],
+    ["2 Gun Tac", ["Justin Larsen", "Timothy Grey", "Adam Seidel"]],
+    ["PCC Tac", ["Mike Casesa", "Bob Devore", "Joey Araniego"]] ]},
+  { date: "2023-09-09", label: "3 Gun", url: "https://practiscore.com/results/new/217928", divs: [
+    ["Open", ["Joe Clemmons", "David DeAntoneo", "Timothy Grey"]],
+    ["Carry Optics", ["Daniel Callehan", "Justin Larsen", "Mike Casesa"]],
+    ["Tactical", ["Colby Allen", "Adam Whitston", "Andrew Miller"]] ]},
+  { date: "2023-08-12", label: "3 Gun", url: "https://practiscore.com/results/new/214458", divs: [
+    ["Open", ["Shine Taylor", "Daniel Crowley", "Adam Seidel"]],
+    ["Carry Optics", ["John Reid", "Joe Clemmons", "Daniel Callehan"]],
+    ["Tactical", ["Ray Chirnside", "Bob Devore", "Colby Allen"]] ]},
+  { date: "2023-07-29", label: "2 Gun / PCC", url: "https://practiscore.com/results/new/212868", divs: [
+    ["2 Gun Open", ["John Reid", "Shine Taylor", "Nick Sprague"]],
+    ["2 Gun Tac", ["Daniel Callehan", "Jacob Molner", "Joe Clemmons"]],
+    ["PCC Open", ["Harry Christian", "Richard Jenkins"]],
+    ["PCC Tac", ["Bob Devore", "Mike Casesa", "Joey Araniego"]] ]},
+  { date: "2023-07-08", label: "3 Gun", url: "https://practiscore.com/results/new/210360", divs: [
+    ["Open", ["Nick Sprague", "Daniel Crowley", "Adam Seidel"]],
+    ["Carry Optics", ["John Reid", "Daniel Callehan", "Manuel Montes"]],
+    ["Tactical", ["Joe Clemmons", "Mike Holland", "Adam Whitston"]] ]},
+  { date: "2023-06-10", label: "3 Gun", url: "https://practiscore.com/results/new/206808", divs: [
+    ["Open", ["Daniel Crowley", "Jacob Molner", "Timothy Grey"]],
+    ["Carry Optics", ["Shine Taylor", "Mike Casesa", "Jason Chapman"]],
+    ["Tactical", ["Joe Easter", "Joe Clemmons", "Geoffrey Paul"]],
+    ["Limited", ["Michael Groe", "Vasily Puchalsky"]] ]},
+  { date: "2023-05-13", label: "3 Gun", url: "https://practiscore.com/results/new/203378", divs: [
+    ["Open", ["Nick Sprague", "Timothy Grey", "Randy Pandis"]],
+    ["Carry Optics", ["John Reid", "Mike Casesa", "Jason Chapman"]],
+    ["Tactical", ["Joe Clemmons", "Ray Chirnside", "Shine Taylor"]],
+    ["Heavy Metal Tactical", ["Blake Melhuish"]] ]},
+  { date: "2023-04-29", label: "2 Gun / PCC", url: "https://practiscore.com/results/new/201712", divs: [
+    ["2 Gun Open", ["John Reid", "David DeAntoneo", "Jacob Molner"]],
+    ["2 Gun Tac", ["Joe Clemmons", "Timothy Grey", "Justin Larsen"]],
+    ["PCC Open", ["Shine Taylor"]],
+    ["PCC Tac", ["Bob Devore", "Ryan Hidalgo", "Paul Hobson"]] ]},
+  { date: "2023-04-08", label: "3 Gun", url: "https://practiscore.com/results/new/199480", divs: [
+    ["Open", ["Adam Seidel", "Max Panchenko", "Brian Seidel"]],
+    ["Carry Optics", ["John Reid", "Mike Casesa", "Jason Chapman"]],
+    ["Tactical", ["Ray Chirnside", "Colby Allen", "Bob Devore"]],
+    ["Limited", ["Brad Atwood"]] ]},
+  { date: "2023-03-11", label: "3 Gun", url: "https://practiscore.com/results/new/196523", divs: [
+    ["Open", ["Daniel Callehan", "Daniel Crowley", "Matt Weeks"]],
+    ["Carry Optics", ["Keith Dilworth", "Shine Taylor", "Justin Larsen"]],
+    ["Tactical", ["Ray Chirnside", "Colby Allen", "Geoffrey Paul"]],
+    ["Limited", ["Joe Easter", "Adam Sheffield"]],
+    ["Goon", ["Emilio Olaez", "Adam Seidel", "Joe Clemmons"]],
+    ["2 Gun Tac", ["Larry Nossen"]] ]},
+  { date: "2023-02-11", label: "3 Gun", url: "https://practiscore.com/results/new/193872", divs: [
+    ["Open", ["Joe Clemmons", "Brian Seidel", "David DeAntoneo"]],
+    ["Carry Optics", ["John Reid", "Daniel Callehan", "Keith Dilworth"]],
+    ["Tactical", ["Ray Chirnside", "Bob Devore", "Colby Allen"]] ]},
+  { date: "2023-01-14", label: "3 Gun", url: "https://practiscore.com/results/new/191400", divs: [
+    ["Open", ["Derreck Dumont", "David DeAntoneo", "Joe Clemmons"]],
+    ["Carry Optics", ["John Reid", "Jason Chapman", "Spencer Simon"]],
+    ["Tactical", ["Ray Chirnside", "Shine Taylor", "Colby Allen"]],
+    ["Limited", ["Bryce Smith"]] ]}
+];
+</script>
+<script>
+(function(){
+  var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  function fmt(d){var p=d.split("-");return MONTHS[+p[1]-1]+" "+(+p[2])+", "+p[0];}
+  var byYear={};
+  MATCHES.forEach(function(m){var y=m.date.slice(0,4);(byYear[y]=byYear[y]||[]).push(m);});
+  var years=Object.keys(byYear).sort().reverse();
+  var nav=document.getElementById("yearnav");
+  years.forEach(function(y){var a=document.createElement("a");a.href="#y"+y;a.textContent=y;nav.appendChild(a);});
+  var content=document.getElementById("content");
+  years.forEach(function(y){
+    var list=byYear[y].sort(function(a,b){return a.date<b.date?1:-1;});
+    var h=document.createElement("h2");h.className="yearhead";h.id="y"+y;
+    h.innerHTML=y+" <span>Season</span>";
+    var sub=document.createElement("p");sub.className="yearsub";
+    sub.textContent=list.length+(list.length===1?" match":" matches");
+    var grid=document.createElement("div");grid.className="grid";
+    list.forEach(function(m){
+      var card=document.createElement("article");card.className="card";
+      var html='<div class="date">'+fmt(m.date)+'</div>'
+        +'<span class="tag">'+m.label+'</span>'
+        +'<div class="divs">';
+      m.divs.forEach(function(dv){
+        html+='<div class="div"><div class="divname">'+dv[0]+'</div><ol class="pl">';
+        dv[1].forEach(function(name,i){
+          html+='<li><span class="n">'+(i+1)+'</span><span>'+name+'</span></li>';
+        });
+        html+='</ol></div>';
+      });
+      html+='</div><div class="fr"><a href="'+m.url+'" target="_blank" rel="noopener">Full Results on PractiScore</a></div>';
+      card.innerHTML=html;
+      grid.appendChild(card);
+    });
+    content.appendChild(h);content.appendChild(sub);content.appendChild(grid);
+  });
+})();
+</script>
+</body>
+</html>
