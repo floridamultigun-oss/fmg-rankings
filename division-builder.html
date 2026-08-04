@@ -97,6 +97,7 @@
     font-family:var(--mono); font-size:9.5px; color:var(--txt); margin-top:5px; letter-spacing:.5px;
     text-shadow:0 1px 3px #000; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
+  .node .n-opts{display:none;}
 
   /* left info block */
   .info{
@@ -212,9 +213,12 @@
     .node .n-lbl{margin:0; width:104px; flex-shrink:0;}
     .node .n-cur{margin:0; white-space:normal; flex:1;}
     .stats{position:static; width:auto; order:10; margin-top:12px;}
-    .viol{position:fixed; left:10px; right:10px; bottom:10px; width:auto; z-index:50;}
-    .flyout{position:fixed; left:10px; right:10px; bottom:10px; width:auto; max-height:70vh; z-index:60;}
-    footer{position:static; order:11; margin-top:12px;}
+    .viol{position:static; width:auto; order:11; margin-top:10px;}
+    .flyout{display:none;}
+    .node{flex-wrap:wrap; cursor:pointer;}
+    .node .n-opts{display:block; flex-basis:100%; margin-top:8px; border-top:1px solid var(--line);}
+    .node .n-opts .opt{padding:10px 6px;}
+    footer{position:static; order:12; margin-top:12px;}
     header{padding:10px 12px; gap:10px;}
     header h1{font-size:15px; letter-spacing:2px;}
     nav{order:3; width:100%; justify-content:center;}
@@ -525,6 +529,14 @@ const ICONS = {
 /* =====================================================================
    RENDER
    ===================================================================== */
+function optRows(w, slot){
+  const sel = getOpt(w, slot.id);
+  return slot.opts.map(o => `
+    <div class="opt ${o.id===sel.id?'sel':''}" onclick="event.stopPropagation(); pick('${w}','${slot.id}','${o.id}')">
+      <div><div class="o-name">${o.name}</div><span class="o-sub">${o.sub}</span></div>
+      ${pillRow(o)}
+    </div>`).join('');
+}
 function pillRow(o){
   const pills = [
     `<span class="pill ${o.tac===true?'y':'n'}">TAC</span>`,
@@ -567,10 +579,12 @@ function renderScreen(w){
     const n = wcfg.nodes[s.id];
     const o = getOpt(w, s.id);
     const conflict = (o.tac !== true || o.mod !== true);
+    const inline = openSlot[w]===s.id ? `<div class="n-opts">${optRows(w, s)}</div>` : '';
     return `<div class="node ${openSlot[w]===s.id?'sel':''} ${conflict?'conflict':''}" style="left:${n.nx}%; top:${n.ny}%" onclick="toggleSlot('${w}','${s.id}')">
       <div class="n-lbl">${s.label}</div>
       <div class="n-box clip-sm"><svg viewBox="0 0 38 38">${ICONS[s.icon]||''}</svg></div>
       <div class="n-cur">${o.name}</div>
+      ${inline}
     </div>`;
   }).join('');
 
@@ -580,12 +594,7 @@ function renderScreen(w){
     const sel = getOpt(w, slot.id);
     flyout = `<div class="flyout clip-sm">
       <div class="f-head"><span class="t">${slot.label}</span><span class="x" onclick="toggleSlot('${w}','${slot.id}')">✕ CLOSE</span></div>
-      <div class="f-body">${slot.opts.map(o => `
-        <div class="opt ${o.id===sel.id?'sel':''}" onclick="pick('${w}','${slot.id}','${o.id}')">
-          <div><div class="o-name">${o.name}</div><span class="o-sub">${o.sub}</span></div>
-          ${pillRow(o)}
-        </div>`).join('')}
-      </div>
+      <div class="f-body">${optRows(w, slot)}</div>
     </div>`;
   }
 
