@@ -696,10 +696,13 @@ function rifleSVG(){
   <path d="M340 218 Q336 226 338 234" stroke="${W}" stroke-width="2.5" fill="none"/>
 
   <!-- magazine (curved) -->
-  <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M436 215 L390 214 L382 252 Q376 300 390 328 L446 320 Q454 272 444 228 Q442 216 436 215 Z"/>
-  <path d="M384 240 Q377 288 390 326" stroke="${W}" stroke-width="1.8" fill="none"/>
-  <path d="M440 242 Q412 248 386 244 M443 266 Q414 274 384 270 M444 290 Q416 300 386 296" stroke="${W}" stroke-width="1.6" fill="none"/>
-  <path fill="${B}" stroke="${W}" stroke-width="1.5" d="M448 318 L390 326 L394 344 L452 334 Z"/>
+  <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M392 214 L438 214 Q452 276 440 338 L386 332 Q378 276 392 214 Z"/>
+  <path d="M395 227 L405 233 M435 227 L425 233" stroke="${W}" stroke-width="1.5"/>
+  <path d="M389 240 Q416 246 445 241" stroke="${W}" stroke-width="1.6" fill="none"/>
+  <path d="M385 310 Q414 316 441 311" stroke="${W}" stroke-width="1.6" fill="none"/>
+  ${[0,1,2].map(r=>[0,1,2].map(c=>`<rect x="${391+c*18-r*2}" y="${252+r*19}" width="13" height="13" rx="3" fill="${B}" stroke="${W}" stroke-width="1.4"/>`).join('')).join('')}
+  <path fill="${B}" stroke="${W}" stroke-width="1.5" d="M379 330 L447 336 L449 353 L375 347 Z"/>
+  ${marks(386,6,10,340,4,4,'rgba(230,237,243,.55)',1)}
 
   <!-- handguard (M-LOK) -->
   <path fill="${B}" stroke="${O}" stroke-width="1.5" d="M432 126 L868 126 L868 170 L846 184 L432 184 Z"/>
