@@ -94,10 +94,22 @@ function build(){
       const pct = parseFloat(r[2])||0;
       let pts = parseFloat(r[3])||0;
       if(noPts.has(m.u)) pts = 0;
+      const divPct = parseFloat(r[4])||0;
       const cur = best.get(nm);
-      if(!cur || pct > cur.pct) best.set(nm,{pct,pts,div:r[1]});
+      if(!cur || pct > cur.pct) best.set(nm,{pct,pts,div:r[1],divPct});
     }
-    for(const [nm,v] of best) rows.push({year,cat,date:m.date,match:m.name,shooter:nm,...v});
+    // overall placement (by overall match %) and division placement (by division %)
+    const order=[...best.entries()].sort((a,b)=>b[1].pct-a[1].pct);
+    const field=order.length;
+    const divCount={}, divOrder=new Map();
+    [...best.entries()].sort((a,b)=>b[1].divPct-a[1].divPct).forEach(([nm,v])=>{
+      divCount[v.div]=(divCount[v.div]||0)+1;
+      divOrder.set(nm, divCount[v.div]);
+    });
+    order.forEach(([nm,v],i)=>{
+      rows.push({year,cat,date:m.date,match:m.name,shooter:nm,...v,
+                 place:i+1, field, divPlace:divOrder.get(nm), divField:divCount[v.div]||0});
+    });
   }
   return rows;
 }
@@ -151,8 +163,8 @@ function render(){
       document.querySelectorAll('tr.hist').forEach(e=>e.remove());
       const h=document.createElement('tr'); h.className='hist';
       const items=a.hist.sort((x,y)=>x.date.localeCompare(y.date))
-        .map(x=>`<tr><td>${x.date}</td><td style="text-align:left">${x.div}</td><td>${x.pct.toFixed(2)}%</td><td>${x.pts?x.pts.toFixed(2):'—'}</td></tr>`).join('');
-      h.innerHTML=`<td colspan="7"><table><thead><tr><th style="text-align:right">Date</th><th style="text-align:left">Division</th><th>Match %</th><th>Match Pts</th></tr></thead><tbody>${items}</tbody></table></td>`;
+        .map(x=>`<tr><td>${x.date}</td><td style="text-align:left">${x.div}</td><td>${x.place} of ${x.field}</td><td>${x.divPlace} of ${x.divField}</td><td>${x.pct.toFixed(2)}%</td><td>${x.pts?x.pts.toFixed(2):'—'}</td></tr>`).join('');
+      h.innerHTML=`<td colspan="7"><table><thead><tr><th style="text-align:right">Date</th><th style="text-align:left">Division</th><th>Overall Place</th><th>Division Place</th><th>Match %</th><th>Match Pts</th></tr></thead><tbody>${items}</tbody></table></td>`;
       tr.after(h);
     };
     tb.appendChild(tr);
