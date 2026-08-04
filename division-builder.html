@@ -196,6 +196,7 @@
   }
 
   .gl-holder{width:100%; height:min(58vh, 540px); position:relative;}
+  .gl-chip{display:none;}
   .stage.three .gun-wrap{pointer-events:auto;}
   button.act.view3d{margin-top:12px; width:auto; padding:9px 20px;}
 
@@ -205,7 +206,11 @@
     .wires{display:none;}
     .info{position:static; order:-2; max-width:none; margin:2px 0 6px;}
     .info .w-name{font-size:28px;}
-    .gun-wrap{position:static; transform:none; width:100%; order:-1; margin:4px 0 10px; pointer-events:auto;}
+    .gun-wrap{position:sticky; top:0; transform:none; width:100%; order:-1; margin:2px 0 8px; pointer-events:auto;
+      z-index:30; background:#0d1216; border-bottom:1px solid var(--line); box-shadow:0 10px 18px rgba(0,0,0,.55); padding:4px 0 6px;}
+    .gl-chip{display:block; position:absolute; top:6px; right:6px; z-index:6; pointer-events:none;
+      font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber);
+      border:1px solid var(--amber-dim); background:rgba(10,14,17,.8); padding:4px 10px;}
     .node{position:static; transform:none; width:auto; display:flex; align-items:center; gap:12px; text-align:left;
           border:1px solid var(--line); background:var(--panel); padding:8px 12px; margin:4px 0;}
     .node .n-box{width:44px; height:44px; flex-shrink:0; margin:0; order:-1;}
@@ -226,7 +231,7 @@
     header .flag{display:none;}
     .match-pill{padding:4px 10px;}
     .match-pill .v{font-size:12px;}
-    .gl-holder{height:320px;}
+    .gl-holder{height:185px;}
   }
 </style>
 </head>
@@ -550,7 +555,7 @@ function pillRow(o){
 
 function gunStage(w){
   if (modelFor(w) && window.FMG3D){
-    return `<div class="gl-holder" id="gl-${w}"></div>`;
+    return `<div class="gl-holder" id="gl-${w}"><div class="gl-chip">${DIV_META[classify(w).current].name}</div></div>`;
   }
   const img = IMAGES[w];
   if (img && img.base){
