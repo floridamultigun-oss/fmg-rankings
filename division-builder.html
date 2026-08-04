@@ -190,7 +190,6 @@
     .gun-wrap{width:78vw;}
   }
 
-  .stage.three .wires{display:none;}
   .gl-holder{width:100%; height:min(58vh, 540px); position:relative;}
   .stage.three .gun-wrap{pointer-events:auto;}
   button.act.view3d{margin-top:12px; width:auto; padding:9px 20px;}
@@ -258,7 +257,64 @@
    Leave empty to use the built-in vector renders.
    ===================================================================== */
 const MODELS = { rifle:'rifle.glb', pistol:'pistol.glb', shotgun:'' };
-const SHOTGUN_MODELS = { pump:'sg-pump.glb', semi:'sg-semi.glb', boxmag:'sg-magfed.glb', double:'' };
+const SHOTGUN_MODELS = { pump:'sg-pump.glb', semi:'sg-semi.glb', boxmag:'sg-magfed.glb', double:'sg-pump.glb' };
+const MODEL_OPTS = {
+  'rifle.glb':   { flip:true, hide:'scope|ammo' },
+  'pistol.glb':  { flip:true },
+  'sg-pump.glb': { flip:true },
+  'sg-semi.glb': {},
+  'sg-magfed.glb': {}
+};
+const ANCH = {
+  rifle: { optic:[-1.2,0.78], optic2:[0.7,0.78], ironsR:[-2.0,0.78], ironsF:[4.0,0.78], muzzle:[4.55,0.35],
+           bipod:[2.2,-0.1], bag:[1.8,-0.1], light:[3.0,-0.1], laser:[3.5,-0.1] },
+  pistol: { slide:[-1.7,1.85], framemount:[2.6,0.5], muzzle:[4.85,1.3], ports:[3.8,1.9], rail:[3.0,0.5], grip:[-1.2,-2.95] },
+  sg: {
+    pump:  { optic:[-0.9,0.85], muzzle:[4.85,0.55], tube:[2.35,0.16], tubelen:2.2, under:[1.3,-0.12], bipod:[1.7,-0.12] },
+    semi:  { optic:[-0.8,0.62], muzzle:[4.9,0.42], tube:[2.2,0.05], tubelen:2.2, under:[2.0,-0.4], bipod:[2.4,-0.4] },
+    boxmag:{ optic:[-0.6,1.0], muzzle:[4.9,0.6], tube:null, under:[2.0,-0.05], bipod:[2.4,-0.05] },
+    double:{ optic:[-0.9,0.85], muzzle:[4.85,0.55], tube:null, under:[1.3,-0.12], bipod:[1.7,-0.12] }
+  }
+};
+function accFor(w){
+  const s = state[w], out = [];
+  const put = (kind, at, extra) => { if (at) out.push(Object.assign({kind, at:[at[0], at[1], 0]}, extra||{})); };
+  if (w === 'rifle'){
+    const A = ANCH.rifle;
+    if (s.optic==='dot') put('dot', A.optic);
+    if (s.optic==='lpvo' || s.optic==='dual') put('lpvo', A.optic);
+    if (s.optic==='dual') put('offset', A.optic2);
+    if (s.optic==='irons'){ put('irons', A.ironsR); put('irons', A.ironsF); }
+    if (s.muzzle==='comp') put('comp', A.muzzle);
+    if (s.muzzle==='bigcomp') put('bigcomp', A.muzzle);
+    if (s.muzzle==='can') put('can', A.muzzle);
+    if (s.support==='bipod20') put('bipod', A.bipod);
+    if (s.support==='bipodxl') put('bipod', A.bipod, {long:true});
+    if (s.support==='bag') put('bag', A.bag);
+    if (s.rail==='light') put('light', A.light);
+    if (s.rail2==='laser') put('laser', A.laser);
+  } else if (w === 'pistol'){
+    const A = ANCH.pistol, sc = 1.8;
+    if (s.optic==='slidedot') put('slidedot', [A.slide[0], 1.78], {scale:sc});
+    if (s.optic==='framemount') put('framemount', A.framemount, {scale:sc, h:0.62});
+    if (s.muzzle==='comp') put('comp', A.muzzle, {scale:1.4});
+    if (s.muzzle==='ported') put('ports', A.ports, {scale:sc});
+    if (s.magazine==='ext') put('magext', A.grip, {scale:sc});
+    if (s.magazine==='stick') put('stick', A.grip, {scale:2.0, h:0.6});
+    if (s.rail==='light') put('light', A.rail, {scale:sc});
+    if (s.rail==='laser') put('laser', A.rail, {scale:sc});
+  } else {
+    const A = ANCH.sg[s.platform] || ANCH.sg.pump;
+    if (s.optic==='dot') put('dot', A.optic);
+    if (s.optic==='mag') put('lpvo', A.optic);
+    if (s.muzzle==='comp') put('comp', A.muzzle, {scale:0.8});
+    if (s.support==='bipod20') put('bipod', A.bipod);
+    if ((s.capacity==='thirteen' || s.capacity==='race') && A.tube) put('tubeext', A.tube, {len:A.tubelen});
+    if (s.rail==='light') put('light', A.under);
+    if (s.rail==='laser') put('laser', A.under);
+  }
+  return out;
+}
 const modelFor = w => w==='shotgun' ? SHOTGUN_MODELS[state.shotgun.platform] : MODELS[w];
 const IMAGES = {                                               // e.g. rifle:{ base:'img/rifle.png', overlays:{ optic:{ dot:'img/rifle-dot.png' } } }
   rifle:{ base:'', overlays:{} },
@@ -425,7 +481,6 @@ const state = {};
 for (const w in WEAPONS){ state[w] = {}; WEAPONS[w].slots.forEach(s => state[w][s.id] = s.opts[0].id); }
 const openViol = { rifle:null, pistol:null, shotgun:null };
 const openSlot = { rifle:null, pistol:null, shotgun:null };
-const mode3d = { rifle:false, pistol:false, shotgun:false };
 
 function getOpt(w, slotId){
   const slot = WEAPONS[w].slots.find(s => s.id === slotId);
@@ -478,7 +533,7 @@ function pillRow(o){
 }
 
 function gunStage(w){
-  if (mode3d[w] && modelFor(w) && window.FMG3D){
+  if (modelFor(w) && window.FMG3D){
     return `<div class="gl-holder" id="gl-${w}"></div>`;
   }
   const img = IMAGES[w];
@@ -496,7 +551,6 @@ function gunStage(w){
 function renderScreen(w){
   const c = classify(w);
   const el = document.getElementById('screen-'+w);
-  if (window.FMG3D) FMG3D.dispose(w);
   const wcfg = WEAPONS[w];
 
   const wires = wcfg.slots.map(s => {
@@ -548,7 +602,7 @@ function renderScreen(w){
       <div class="st-bar"><i style="width:${ok?100:Math.max(8, 100-34*c[d].viol.length)}%"></i></div>`;
   }).join('');
 
-  el.innerHTML = `<div class="stage ${mode3d[w] && modelFor(w) && window.FMG3D ? 'three' : ''}">
+  el.innerHTML = `<div class="stage ${modelFor(w) && window.FMG3D ? 'three' : ''}">
     <svg class="wires" viewBox="0 0 100 100" preserveAspectRatio="none">${wires}</svg>
     <div class="gun-wrap" id="gunwrap-${w}">${gunStage(w)}</div>
     ${nodes}
@@ -560,7 +614,6 @@ function renderScreen(w){
         ${c.goofy?'<div class="flag on">GOOFY GUN CANDIDATE</div>':''}
         ${c.heavy?'<div class="flag on">HEAVY CALIBER</div>':''}
       </div>
-      ${modelFor(w) && window.FMG3D ? `<div><button class="act ghost view3d clip-sm" onclick="toggle3D('${w}')">${mode3d[w] ? '◄ VIEW DIAGRAM' : 'VIEW IN 3D'}</button></div>` : ''}
     </div>
     <div class="stats clip-sm">
       <h3>Division Eligibility — ${wcfg.label}</h3>
@@ -576,8 +629,8 @@ function renderScreen(w){
     <footer>Rules: <a href="https://www.floridamultigun.com/divisions" target="_blank" rel="noopener">floridamultigun.com/divisions</a> — silent items resolved permissively; Match Director makes final equipment calls.<br>
     3D models <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY-4.0</a> via Sketchfab: <a href="https://sketchfab.com/3d-models/ar-15-model-90db6d4c7f0348e8a878b02b31783b69" target="_blank" rel="noopener">"AR 15 Model" by Desant_Art</a> · <a href="https://sketchfab.com/3d-models/jurassic-the-hunted-g18-7d716ea646dd4e969d8f5a04e0723bf3" target="_blank" rel="noopener">"Jurassic: The Hunted G18" by Barcelo</a> · <a href="https://sketchfab.com/3d-models/shotgun-bfbd8edb727846d89e25f797c202437f" target="_blank" rel="noopener">"Shotgun" by MKoegler3D</a> · <a href="https://sketchfab.com/3d-models/beretta-1301-shotgun-f4d6c5de774b45f2834ac6ec2c74f579" target="_blank" rel="noopener">"Beretta 1301 shotgun" by 2003926yzy</a> · <a href="https://sketchfab.com/3d-models/low-poly-genesis-arms-gen-12-5b625c44b23543149936bafa776b8d68" target="_blank" rel="noopener">"Low-Poly Genesis Arms Gen 12" by TastyTony</a></footer>
   </div>`;
-  if (mode3d[w] && window.FMG3D && modelFor(w)){
-    FMG3D.mount(w, document.getElementById('gl-'+w), modelFor(w));
+  if (window.FMG3D && modelFor(w)){
+    FMG3D.attach(w, document.getElementById('gl-'+w), modelFor(w), accFor(w), MODEL_OPTS[modelFor(w)]);
   }
 }
 
@@ -622,7 +675,6 @@ function copyLoadout(){
     setTimeout(()=>document.querySelectorAll('.copied').forEach(c=>c.classList.remove('show')), 1800);
   });
 }
-function toggle3D(w){ mode3d[w] = !mode3d[w]; renderScreen(w); }
 
 /* =====================================================================
    BUILT-IN WEAPON RENDERS — vector-stencil style: solid black
