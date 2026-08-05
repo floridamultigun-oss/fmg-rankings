@@ -282,7 +282,7 @@ const MODEL_OPTS = {
   'sg-double.glb': {},
   'pistol.glb':  { flip:true, yaw:-0.20 },
   'sg-pump.glb': { flip:true },
-  'sg-semi.glb': {},
+  'sg-semi.glb': { roll:0.16 },
   'sg-magfed.glb': {}
 };
 const ANCH = {
@@ -301,7 +301,7 @@ function accFor(w){
   const s = state[w], out = [];
   const put = (kind, at, extra) => { if (at) out.push(Object.assign({kind, at:[at[0], at[1], at[2]||0]}, extra||{})); };
   if (w === 'rifle'){
-    if (s.platform==='bolt' || s.caliber==='762') return [];
+    if (s.platform==='bolt' || s.platform==='ak' || s.caliber==='762') return [];
     const A = ANCH.rifle;
     if (s.optic==='dot') put('dot', A.optic);
     if (s.optic==='lpvo' || s.optic==='dual') put('lpvo', A.optic);
@@ -346,6 +346,7 @@ function rifleModel(){
   const s = state.rifle;
   if (s.platform==='bolt') return 'rifle-bolt.glb';
   if (s.platform==='comp') return 'rifle-compar.glb';
+  if (s.platform==='ak') return 'rifle-ak47.glb';
   return RIFLE_CAL_MODELS[s.caliber] || MODELS.rifle;
 }
 function pistolModel(){
@@ -377,6 +378,7 @@ const WEAPONS = {
         { id:'factory', name:'Factory Semi-Auto (AR-pattern)', sub:'Factory configuration, internal mods OK', tac:true, mod:true },
         { id:'custom',  name:'Custom / Race Configuration',    sub:'Non-factory appearance or configuration', tac:'Tactical requires factory configuration & appearance', mod:'Modified requires factory configuration & appearance' },
         { id:'comp',    name:'Competition / Race Build',        sub:'Non-factory race configuration — Open division', tac:'Tactical requires factory configuration & appearance', mod:'Modified requires factory configuration & appearance' },
+        { id:'ak',      name:'AK Platform',                    sub:'AK-pattern rifle', tac:true, mod:true },
         { id:'bolt',    name:'Bolt-Action / Historical',       sub:'Oddball platform — Goofy Gun candidate', tac:true, mod:true, goofy:true }
       ]},
       { id:'caliber', label:'Chambering', icon:'ammo', opts:[
