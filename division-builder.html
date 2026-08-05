@@ -298,7 +298,7 @@ const ANCH = {
   rifle_comp: { optic:[-1.0,0.82], optic2:[0.8,0.82], ironsR:[-1.8,0.82], ironsF:[3.6,0.82], muzzle:[3.25,0.3], bipod:[2.0,-0.06], bag:[1.6,-0.06], light:[2.7,0.6,0.16], laser:[3.05,0.86], magwell:[0.0,-0.55] },
   rifle: { optic:[-1.2,0.78], optic2:[0.7,0.78], ironsR:[-2.0,0.78], ironsF:[4.0,0.78], muzzle:[4.55,0.35],
            bipod:[2.2,-0.1], bag:[1.8,-0.1], light:[2.9,0.6,0.16], laser:[3.35,0.82], magwell:[0.15,-0.15] },
-  precision: { optic:[-0.3,0.82], muzzle:[4.6,0.28], bipod:[2.0,-0.1], bag:[1.6,-0.1] },
+  precision: { optic:[-0.3,0.82], muzzle:[3.9,0.28], bipod:[2.0,-0.1], bag:[1.6,-0.1] },
   pistol: { slide:[-1.7,1.85,0.08], framemount:[2.6,0.5,0.08], muzzle:[4.85,1.3,0.08], ports:[3.8,1.9,0.08], rail:[3.0,0.5,0.08], grip:[-1.2,-2.95,0.08] },
   pistol_m1911: { slide:[-1.35,1.75,0], framemount:[2.4,0.45,0], muzzle:[4.6,1.25,0], ports:[3.6,1.8,0], rail:[3.0,0.2,0], grip:[-1.35,-2.7,0] },
   sg: {
@@ -359,7 +359,8 @@ function accFor(w){
     if (s.rail==='laser') put('railLaser', A.laserTop);
   }
   if (w === 'precision'){
-    const A = ANCH.precision, o2 = [];
+    const pm = precisionModel();
+    const A = (pm==='rifle-bolt.glb') ? ANCH.precision : ANCH.rifle, o2 = [];
     const putp = (kind, at, extra) => { if (at) o2.push(Object.assign({kind, at:[at[0], at[1], at[2]||0]}, extra||{})); };
     if (s.optic==='dot') putp('dot', A.optic);
     if (s.optic==='mag') putp('lpvo', A.optic);
@@ -379,11 +380,16 @@ function rifleModel(){
   if (s.platform==='ak') return 'rifle-ak47.glb';
   return RIFLE_CAL_MODELS[s.caliber] || MODELS.rifle;
 }
+function precisionModel(){
+  const s = state.precision;
+  if (s.platform==='semi') return s.caliber==='65' ? 'rifle-scar.glb' : 'rifle-sr25.glb';
+  return 'rifle-bolt.glb';
+}
 function pistolModel(){
   if (state.pistol.platform==='revolver' || state.pistol.caliber==='357') return 'pistol-revolver.glb';
   return state.pistol.caliber==='45' ? 'pistol-m1911.glb' : MODELS.pistol;
 }
-const modelFor = w => w==='shotgun' ? SHOTGUN_MODELS[state.shotgun.platform] : (w==='rifle' ? rifleModel() : (w==='precision' ? (state.precision.caliber==='65' ? 'rifle-scar.glb' : 'rifle-bolt.glb') : pistolModel()));
+const modelFor = w => w==='shotgun' ? SHOTGUN_MODELS[state.shotgun.platform] : (w==='rifle' ? rifleModel() : (w==='precision' ? precisionModel() : pistolModel()));
 const IMAGES = {                                               // e.g. rifle:{ base:'img/rifle.png', overlays:{ optic:{ dot:'img/rifle-dot.png' } } }
   rifle:{ base:'', overlays:{} },
   pistol:{ base:'', overlays:{} },
@@ -553,7 +559,8 @@ const WEAPONS = {
     label:'Precision Rifle',
     slots: [
       { id:'platform', label:'Action', icon:'receiver', opts:[
-        { id:'bolt', name:'Bolt-Action', sub:'Precision bolt rifle', tac:true, mod:true }
+        { id:'bolt', name:'Bolt-Action',    sub:'Precision bolt rifle', tac:true, mod:true },
+        { id:'semi', name:'Semi-Automatic', sub:'Gas-operated precision rifle', tac:true, mod:true }
       ]},
       { id:'caliber', label:'Chambering', icon:'ammo', opts:[
         { id:'308', name:'.308 Winchester',  sub:'7.62x51 NATO', tac:true, mod:true },
@@ -633,9 +640,13 @@ const ICONS = {
 /* =====================================================================
    RENDER
    ===================================================================== */
+function optsFor(w, slot){
+  if (w==='precision' && slot.id==='optic' && state.precision.platform==='bolt') return slot.opts.filter(o => o.id==='dot');
+  return slot.opts;
+}
 function optRows(w, slot){
   const sel = getOpt(w, slot.id);
-  return slot.opts.map(o => `
+  return optsFor(w, slot).map(o => `
     <div class="opt ${o.id===sel.id?'sel':''}" onclick="event.stopPropagation(); pick('${w}','${slot.id}','${o.id}')">
       <div><div class="o-name">${o.name}</div><span class="o-sub">${o.sub}</span></div>
       ${pillRow(o)}
@@ -786,6 +797,7 @@ function pick(w, slotId, optId){
   if (w === 'pistol' && state.pistol.platform === 'revolver' && REVOLVER_LOCKED.includes(slotId)) return;
   state[w][slotId] = optId;
   if (w === 'pistol' && slotId === 'platform' && optId === 'revolver') state.pistol.caliber = '357';
+  if (w === 'precision' && slotId === 'platform' && optId === 'bolt' && state.precision.optic !== 'dot') state.precision.optic = 'dot';
   renderScreen(w); renderHeader();
 }
 function toggleViol(w, d){ openViol[w] = (openViol[w]===d)?null:d; renderScreen(w); }
