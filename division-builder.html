@@ -290,12 +290,12 @@ const MODEL_OPTS = {
   'rifle-compar.glb': { flip:true },
   'sg-double.glb': {},
   'pistol.glb':  { flip:true, yaw:-0.20 },
-  'sg-pump.glb': { flip:true },
+  'sg-pump.glb': {},
   'sg-semi.glb': { roll:0.16 },
   'sg-magfed.glb': {}
 };
 const ANCH = {
-  rifle_comp: { optic:[-1.0,0.82], optic2:[0.8,0.82], ironsR:[-1.8,0.82], ironsF:[3.6,0.82], muzzle:[3.25,0.3], bipod:[2.0,-0.06], bag:[1.6,-0.06], light:[2.7,0.6,0.16], laser:[3.05,0.86] },
+  rifle_comp: { optic:[-1.0,0.82], optic2:[0.8,0.82], ironsR:[-1.8,0.82], ironsF:[3.6,0.82], muzzle:[3.25,0.3], bipod:[2.0,-0.06], bag:[1.6,-0.06], light:[2.7,0.6,0.16], laser:[3.05,0.86], magwell:[0.0,-0.55] },
   rifle: { optic:[-1.2,0.78], optic2:[0.7,0.78], ironsR:[-2.0,0.78], ironsF:[4.0,0.78], muzzle:[4.55,0.35],
            bipod:[2.2,-0.1], bag:[1.8,-0.1], light:[2.9,0.6,0.16], laser:[3.35,0.82], magwell:[0.15,-0.15] },
   precision: { optic:[-0.3,0.82], muzzle:[4.6,0.28], bipod:[2.0,-0.1], bag:[1.6,-0.1] },
@@ -318,6 +318,9 @@ function accFor(w){
       if (s.magazine==='ext30') put('arMag', A.magwell, {len:2.0});
       else if (s.magazine==='drum') put('drumMag', A.magwell);
       else put('arMag', A.magwell, {len:1.4});
+    } else if (s.platform==='comp'){
+      if (s.magazine==='ext30') put('arMag', A.magwell, {len:2.0});
+      else if (s.magazine==='drum') put('drumMag', A.magwell);
     }
     if (s.optic==='dot') put('dot', A.optic);
     if (s.optic==='lpvo' || s.optic==='dual') put('lpvo', A.optic);
@@ -403,7 +406,7 @@ const WEAPONS = {
     slots: [
       { id:'platform', label:'Receiver / Platform', icon:'receiver', opts:[
         { id:'factory', name:'Factory Semi-Auto (AR-pattern)', sub:'Factory configuration, internal mods OK', tac:true, mod:true },
-        { id:'comp',    name:'Competition / Race Build',        sub:'For FRTs or Full-Auto Lowers — Open division', tac:'Tactical requires factory configuration & appearance', mod:'Modified requires factory configuration & appearance' },
+        { id:'comp',    name:'Class 3',                          sub:'For FRTs or Full-Auto Lowers — Open division', tac:'Tactical requires factory configuration & appearance', mod:'Modified requires factory configuration & appearance' },
         { id:'ak',      name:'AK Platform',                    sub:'AK-pattern rifle', tac:true, mod:true }
       ]},
       { id:'caliber', label:'Chambering', icon:'ammo', opts:[
@@ -742,7 +745,7 @@ function renderScreen(w){
     ${viol}
     ${flyout}
     <footer>Rules: <a href="https://www.floridamultigun.com/divisions" target="_blank" rel="noopener">floridamultigun.com/divisions</a> — silent items resolved permissively; Match Director makes final equipment calls.<br>
-    3D models <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY-4.0</a> via Sketchfab: <a href="https://sketchfab.com/3d-models/ar-15-model-90db6d4c7f0348e8a878b02b31783b69" target="_blank" rel="noopener">"AR 15 Model" by Desant_Art</a> · <a href="https://sketchfab.com/3d-models/jurassic-the-hunted-g18-7d716ea646dd4e969d8f5a04e0723bf3" target="_blank" rel="noopener">"Jurassic: The Hunted G18" by Barcelo</a> · <a href="https://sketchfab.com/3d-models/shotgun-bfbd8edb727846d89e25f797c202437f" target="_blank" rel="noopener">"Shotgun" by MKoegler3D</a> · <a href="https://sketchfab.com/3d-models/beretta-1301-shotgun-f4d6c5de774b45f2834ac6ec2c74f579" target="_blank" rel="noopener">"Beretta 1301 shotgun" by 2003926yzy</a> · <a href="https://sketchfab.com/3d-models/low-poly-genesis-arms-gen-12-5b625c44b23543149936bafa776b8d68" target="_blank" rel="noopener">"Low-Poly Genesis Arms Gen 12" by TastyTony</a> · <a href="https://sketchfab.com/3d-models/low-poly-haenel-rs9-fec05d9d9ab440779e1b4be1fae2f2d9" target="_blank" rel="noopener">"Low-Poly Haenel RS9" by TastyTony</a> · <a href="https://sketchfab.com/3d-models/low-poly-sr-25-81976c51d61543a288cf135fd7485951" target="_blank" rel="noopener">"Low-Poly SR-25" by TastyTony</a> · <a href="https://sketchfab.com/3d-models/ak47-assault-rifle-e9ce1766b7044316a825c508893f7d7f" target="_blank" rel="noopener">"AK47 - Assault Rifle"</a> · <a href="https://sketchfab.com/3d-models/m1911a1-cf0a40150a584b1d8c40222ca0c78fac" target="_blank" rel="noopener">"M1911A1" by skaveria</a> · <a href="https://sketchfab.com/3d-models/double-barrel-shotgun-04741a40f2224cffafc343b0236d5bbe" target="_blank" rel="noopener">"Double Barrel Shotgun" by Pepego</a> · <a href="https://sketchfab.com/Obi-Wanya" target="_blank" rel="noopener">"Pythonlike Revolver" by Obi-Wanya</a> · <a href="https://sketchfab.com/3d-models/fn-scar-mk-20-ssr-f06036b5e05648cf95dfa23fb3112ad5" target="_blank" rel="noopener">"FN SCAR MK 20 SSR" by Skylar</a></footer>
+    3D models <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY-4.0</a> via Sketchfab: <a href="https://sketchfab.com/3d-models/ar-15-model-90db6d4c7f0348e8a878b02b31783b69" target="_blank" rel="noopener">"AR 15 Model" by Desant_Art</a> · <a href="https://sketchfab.com/3d-models/jurassic-the-hunted-g18-7d716ea646dd4e969d8f5a04e0723bf3" target="_blank" rel="noopener">"Jurassic: The Hunted G18" by Barcelo</a> · <a href="https://sketchfab.com/3d-models/shotgun-bfbd8edb727846d89e25f797c202437f" target="_blank" rel="noopener">"Shotgun" by MKoegler3D</a> · <a href="https://sketchfab.com/3d-models/beretta-1301-shotgun-f4d6c5de774b45f2834ac6ec2c74f579" target="_blank" rel="noopener">"Beretta 1301 shotgun" by 2003926yzy</a> · <a href="https://sketchfab.com/3d-models/low-poly-genesis-arms-gen-12-5b625c44b23543149936bafa776b8d68" target="_blank" rel="noopener">"Low-Poly Genesis Arms Gen 12" by TastyTony</a> · <a href="https://sketchfab.com/3d-models/low-poly-haenel-rs9-fec05d9d9ab440779e1b4be1fae2f2d9" target="_blank" rel="noopener">"Low-Poly Haenel RS9" by TastyTony</a> · <a href="https://sketchfab.com/3d-models/low-poly-sr-25-81976c51d61543a288cf135fd7485951" target="_blank" rel="noopener">"Low-Poly SR-25" by TastyTony</a> · <a href="https://sketchfab.com/3d-models/ak47-assault-rifle-e9ce1766b7044316a825c508893f7d7f" target="_blank" rel="noopener">"AK47 - Assault Rifle"</a> · <a href="https://sketchfab.com/3d-models/m1911a1-cf0a40150a584b1d8c40222ca0c78fac" target="_blank" rel="noopener">"M1911A1" by skaveria</a> · <a href="https://sketchfab.com/3d-models/double-barrel-shotgun-04741a40f2224cffafc343b0236d5bbe" target="_blank" rel="noopener">"Double Barrel Shotgun" by Pepego</a> · <a href="https://sketchfab.com/Obi-Wanya" target="_blank" rel="noopener">"Pythonlike Revolver" by Obi-Wanya</a> · <a href="https://sketchfab.com/3d-models/fn-scar-mk-20-ssr-f06036b5e05648cf95dfa23fb3112ad5" target="_blank" rel="noopener">"FN SCAR MK 20 SSR" by Skylar</a> · <a href="https://sketchfab.com/3d-models/shotgun-bec49e6f99e347cbb60e6390b2c4202c" target="_blank" rel="noopener">"Shotgun" by Jonathan Steylaerts</a></footer>
   </div>`;
   if (window.FMG3D && modelFor(w)){
     FMG3D.attach(w, document.getElementById('gl-'+w), modelFor(w), accFor(w), MODEL_OPTS[modelFor(w)]);
