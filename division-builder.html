@@ -317,7 +317,7 @@ function accFor(w){
     if (s.rail==='light') put('railLight', A.light, {rotX: Math.PI/2});
     if (s.rail2==='laser') put('railLaser', A.laser);
   } else if (w === 'pistol'){
-    if (s.platform==='revolver' || pistolModel()==='pistol-m1911.glb') return [];
+    if (s.platform==='revolver' || pistolModel()==='pistol-revolver.glb' || pistolModel()==='pistol-m1911.glb') return [];
     const A = ANCH.pistol, sc = 1.8;
     if (s.optic==='slidedot') put('slidedot', [A.slide[0], 1.7, 0.08], {scale:sc});
     if (s.optic==='framemount') put('framemount', A.framemount, {scale:sc});
@@ -349,7 +349,7 @@ function rifleModel(){
   return RIFLE_CAL_MODELS[s.caliber] || MODELS.rifle;
 }
 function pistolModel(){
-  if (state.pistol.platform==='revolver') return 'pistol-revolver.glb';
+  if (state.pistol.platform==='revolver' || state.pistol.caliber==='357') return 'pistol-revolver.glb';
   return state.pistol.caliber==='45' ? 'pistol-m1911.glb' : MODELS.pistol;
 }
 const modelFor = w => w==='shotgun' ? SHOTGUN_MODELS[state.shotgun.platform] : (w==='rifle' ? rifleModel() : pistolModel());
