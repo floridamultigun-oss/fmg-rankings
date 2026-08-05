@@ -190,7 +190,7 @@
   .nyet-flash img{max-height:82vh; max-width:82vw; box-shadow:0 0 40px rgba(0,0,0,.8); border:3px solid #b5892f;}
   @keyframes nyetPop{0%{transform:scale(.7); opacity:0;} 25%{transform:scale(1.03); opacity:1;} 80%{opacity:1;} 100%{opacity:0;}}
   footer{
-    position:absolute; left:28px; bottom:4px; z-index:3;
+    position:absolute; left:374px; right:250px; bottom:4px; z-index:3;
     font-family:var(--mono); font-size:9.5px; color:var(--faint);
   }
   footer a{color:var(--dim);}
@@ -238,6 +238,26 @@
     .match-pill .v{font-size:12px;}
     .gl-holder{height:185px;}
   }
+  /* ============ LEFT CONTROL DOCK (desktop primary menu) ============ */
+  .leftcol{position:absolute; left:24px; top:22px; bottom:18px; width:334px; z-index:8; display:flex; flex-direction:column;}
+  .leftcol .info{position:static; left:auto; top:auto; max-width:none;}
+  .dock{margin-top:12px; flex:1; min-height:0; overflow-y:auto; padding-right:4px;}
+  .dock::-webkit-scrollbar{width:7px;} .dock::-webkit-scrollbar-thumb{background:var(--line2); border-radius:4px;} .dock::-webkit-scrollbar-track{background:transparent;}
+  .dock-hint{font-family:var(--mono); font-size:9px; letter-spacing:1.5px; color:var(--dim); text-transform:uppercase; margin-bottom:8px;}
+  .drow{border:1px solid var(--line); background:var(--panel); margin-bottom:6px;}
+  .drow.open{border-color:var(--amber);}
+  .drow.conflict:not(.open){border-left:2px solid var(--amber);}
+  .drow-head{display:flex; align-items:center; gap:11px; padding:9px 12px; cursor:pointer;}
+  .drow-head:hover{background:rgba(255,154,46,.06);}
+  .drow-ic{width:26px; height:26px; flex:none;}
+  .drow-txt{flex:1; min-width:0;}
+  .drow-lbl{font-size:9px; letter-spacing:1.5px; color:var(--dim); text-transform:uppercase;}
+  .drow-cur{font-size:14px; font-weight:700; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .drow.open .drow-cur{color:var(--amber);}
+  .drow-chev{color:var(--dim); font-size:11px; flex:none; font-family:var(--mono);}
+  .drow-opts{border-top:1px solid var(--line); padding:6px 9px 9px;}
+  @media(min-width:841px){ .node{display:none !important;} .wires{display:none !important;} .flyout{display:none !important;} }
+  @media(max-width:840px){ .leftcol{position:static; display:contents;} .dock{display:none;} }
   /* ============ HELP + SHARE ============ */
   .help-btn{font-family:var(--mono); font-size:13px; font-weight:700; width:28px; height:28px; border-radius:50%;
     border:1px solid var(--line2); background:var(--panel); color:var(--amber); cursor:pointer; line-height:1; flex:none;}
@@ -392,7 +412,7 @@ const ANCH = {
   rifle_scar: { optic:[-0.9,0.85], optic2:[0.9,0.85], ironsR:[-1.9,0.9], ironsF:[2.8,0.9], muzzle:[4.6,0.42],
            bipod:[1.95,-0.02], bag:[1.55,-0.02], light:[2.4,0.5,0.16], laser:[2.7,0.9], magwell:[-0.75,0.15] },
   precision: { optic:[-0.3,0.82], muzzle:[3.9,0.28], bipod:[2.0,-0.1], bag:[1.6,-0.1] },
-  pistol: { slide:[-1.7,1.7,0.08], framemount:[2.6,0.5,0.08], muzzle:[4.85,1.3,0.08], ports:[3.8,1.9,0.08], rail:[3.0,0.5,0.08], grip:[-0.9,-2.75,0.08] },
+  pistol: { slide:[-1.7,1.7,0.08], framemount:[2.6,0.5,0.08], muzzle:[4.85,1.3,0.08], ports:[3.8,1.9,0.08], rail:[3.0,0.5,0.08], grip:[-1.9,-2.75,0.08] },
   pistol_m1911: { slide:[-1.35,1.9,-0.63], framemount:[1.4,1.9,-0.63], muzzle:[4.45,1.78,-0.63], ports:[3.7,2.1,-0.63], rail:[2.9,1.05,-0.63], grip:[-1.7,-1.0,-0.63] },
   sg: {
     pump:  { optic:[0.2,0.58], muzzle:[4.6,0.24], tube:[2.5,-0.05], tubelen:2.0, under:[2.0,-0.1], bipod:[1.8,-0.15], laserTop:[1.0,0.6], lightSide:[1.6,0.0,0.22] },
@@ -797,10 +817,25 @@ function renderScreen(w){
     </div>`;
   }).join('');
 
+  // desktop always-visible control dock (accordion) — mobile keeps the on-gun node list
+  const dock = slots.map(s => {
+    const o = getOpt(w, s.id);
+    const isOpen = openSlot[w]===s.id;
+    const conflict = (o.tac!==true || o.mod!==true);
+    return `<div class="drow ${isOpen?'open':''} ${conflict?'conflict':''}">
+      <div class="drow-head" onclick="toggleSlot('${w}','${s.id}')">
+        <svg class="drow-ic" viewBox="0 0 38 38">${ICONS[s.icon]||''}</svg>
+        <div class="drow-txt"><div class="drow-lbl">${s.label}</div><div class="drow-cur">${o.name}</div></div>
+        <span class="drow-chev">${isOpen?'▾':'▸'}</span>
+      </div>
+      ${isOpen?`<div class="drow-opts">${optRows(w, s)}</div>`:''}
+    </div>`;
+  }).join('');
+
+  // legacy floating flyout retained for mobile node taps (hidden on desktop by dock layout)
   let flyout = '';
   if (openSlot[w]){
     const slot = wcfg.slots.find(s => s.id === openSlot[w]);
-    const sel = getOpt(w, slot.id);
     flyout = `<div class="flyout clip-sm">
       <div class="f-head"><span class="t">${slot.label}</span><span class="x" onclick="toggleSlot('${w}','${slot.id}')">✕ CLOSE</span></div>
       <div class="f-body">${optRows(w, slot)}</div>
@@ -829,19 +864,25 @@ function renderScreen(w){
     <svg class="wires" viewBox="0 0 100 100" preserveAspectRatio="none">${wires}</svg>
     <div class="gun-wrap" id="gunwrap-${w}">${gunStage(w)}</div>
     ${nodes}
-    <div class="info">
-      <div class="w-name">${wcfg.label}</div>
-      <div class="w-div-lbl">${wcfg.label} Division</div>
-      <div class="w-div clip-sm">${DIV_META[c.current].name}</div>
-      <div class="g-flags">
-        ${c.goofy?'<div class="flag on">GOOFY GUN CANDIDATE</div>':''}
-        ${c.heavy?'<div class="flag on">HEAVY CALIBER</div>':''}
+    <div class="leftcol">
+      <div class="info">
+        <div class="w-name">${wcfg.label}</div>
+        <div class="w-div-lbl">${wcfg.label} Division</div>
+        <div class="w-div clip-sm">${DIV_META[c.current].name}</div>
+        <div class="g-flags">
+          ${c.goofy?'<div class="flag on">GOOFY GUN CANDIDATE</div>':''}
+          ${c.heavy?'<div class="flag on">HEAVY CALIBER</div>':''}
+        </div>
+        <div class="presets">
+          <span class="pre-lbl">Quick start</span>
+          ${PRESETS[w].map((p,i)=>`<button class="pre-chip" onclick="applyPreset('${w}',${i})">${p.name}</button>`).join('')}
+        </div>
+        <button class="guided-btn" onclick="startGuided('${w}')">★ Guided Setup</button>
       </div>
-      <div class="presets">
-        <span class="pre-lbl">Quick start</span>
-        ${PRESETS[w].map((p,i)=>`<button class="pre-chip" onclick="applyPreset('${w}',${i})">${p.name}</button>`).join('')}
+      <div class="dock">
+        <div class="dock-hint">Configure — tap any item</div>
+        ${dock}
       </div>
-      <button class="guided-btn" onclick="startGuided('${w}')">★ Guided Setup</button>
     </div>
     <div class="stats clip-sm">
       <h3>Division Eligibility — ${wcfg.label}</h3>
