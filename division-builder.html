@@ -401,12 +401,12 @@ const MODEL_OPTS = {
   'rifle-compar.glb': { flip:true },
   'sg-double.glb': {},
   'pistol.glb':  { flip:true, yaw:-0.20 },
-  'sg-pump.glb': { roll:-0.2 },
-  'sg-semi.glb': { roll:-0.10 },
+  'sg-pump.glb': { roll:-0.18 },
+  'sg-semi.glb': { roll:-0.05 },
   'sg-magfed.glb': {}
 };
 const ANCH = {
-  rifle_comp: { optic:[-1.0,0.82], optic2:[0.8,0.82], ironsR:[-1.8,0.82], ironsF:[3.6,0.82], muzzle:[3.55,0.52], bipod:[2.0,-0.06], bag:[1.6,-0.06], light:[2.7,0.6,0.16], laser:[3.05,0.86], magwell:[0.0,-0.55] },
+  rifle_comp: { optic:[-1.0,1.20], optic2:[0.8,1.37], ironsR:[-1.8,1.20], ironsF:[4.0,1.37], muzzle:[4.85,1.0], bipod:[2.0,0.84], bag:[1.6,0.84], light:[2.7,0.95,0.26], laser:[3.3,1.37], magwell:[0.0,-0.55] },
   rifle: { optic:[-1.2,0.78], optic2:[0.7,0.78], ironsR:[-2.0,0.78], ironsF:[4.0,0.78], muzzle:[4.55,0.35],
            bipod:[2.2,-0.1], bag:[1.8,-0.1], light:[2.9,0.6,0.16], laser:[3.35,0.82], magwell:[-0.72,0.18] },
   rifle_scar: { optic:[-0.9,0.85], optic2:[0.9,0.85], ironsR:[-1.9,0.9], ironsF:[2.8,0.9], muzzle:[4.6,0.42],
@@ -415,8 +415,8 @@ const ANCH = {
   pistol: { slide:[-1.7,1.7,0.08], framemount:[2.6,0.5,0.08], muzzle:[4.85,1.3,0.08], ports:[3.8,1.9,0.08], rail:[3.0,0.5,0.08], grip:[-1.9,-2.75,0.08] },
   pistol_m1911: { slide:[-1.35,1.9,-0.63], framemount:[1.4,1.9,-0.63], muzzle:[4.45,1.78,-0.63], ports:[3.7,2.1,-0.63], rail:[2.9,1.05,-0.63], grip:[-1.7,-1.0,-0.63] },
   sg: {
-    pump:  { optic:[0.2,0.38], muzzle:[4.6,0.24], tube:[2.5,-0.05], tubelen:2.0, under:[2.0,-0.1], bipod:[2.0,0.0], laserTop:[1.0,0.6], lightSide:[3.1,-0.12,0.26] },
-    semi:  { optic:[-0.75,0.5], muzzle:[4.45,0.2], tube:[3.4,-0.05], tubelen:1.3, under:[2.0,-0.1], bipod:[2.0,0.06], laserTop:[1.3,0.62], lightSide:[2.4,-0.05,0.24] },
+    pump:  { optic:[0.2,0.82], muzzle:[5.0,0.40], tube:[3.6,0.14], tubelen:1.35, under:[2.0,-0.1], bipod:[2.0,-0.48], laserTop:[0.9,0.55], lightSide:[2.2,-0.15,0.26] },
+    semi:  { optic:[-0.75,0.88], muzzle:[4.95,0.68], tube:[3.55,0.36], tubelen:1.3, under:[2.0,-0.1], bipod:[2.0,-0.36], laserTop:[1.3,0.62], lightSide:[2.4,0.0,0.24] },
     boxmag:{ optic:[-0.6,1.0], muzzle:[4.9,0.6], tube:null, under:[2.0,-0.05], bipod:[2.5,0.12], laserTop:[1.5,0.88], lightSide:[1.0,0.85,0.2] },
     double:{ optic:[-0.9,0.85], muzzle:[4.85,0.55], tube:null, under:[1.3,-0.12], bipod:[1.7,-0.12], laserTop:[1.6,0.9], lightSide:[1.2,0.7,0.2] }
   }
@@ -453,7 +453,7 @@ function accFor(w){
     if (s.optic==='slidedot') put('slidedot', A.slide, {scale:sc});
     if (s.optic==='framemount') put('framemount', A.framemount, {scale:sc});
     if (s.muzzle==='comp') put('comp', A.muzzle, {scale:1.4});
-    if (s.muzzle==='ported') put('ports', A.ports, {scale:sc});
+    if (s.muzzle==='ported') put('ports', A.ports, {scale:sc}); if (s.muzzle==='can') put('can', A.muzzle, {len:2.4, r:0.42});
     if (s.magazine==='ext') put('magext', A.grip, {scale:sc});
     if (s.magazine==='stick') put('stick', A.grip, {scale:2.0, h:0.6});
     if (s.rail==='light') put('pistolLight', A.rail, {scale:2.0});
@@ -601,7 +601,7 @@ const WEAPONS = {
       { id:'muzzle', label:'Muzzle', icon:'muzzle', opts:[
         { id:'none',  name:'Standard Barrel',   sub:'No brake or porting', tac:true, mod:true },
         { id:'comp',  name:'Compensator',       sub:'Threaded muzzle brake', tac:'Compensators & barrel porting not allowed in Tactical', mod:'Compensators & barrel porting not allowed in Modified' },
-        { id:'ported',name:'Ported Barrel',     sub:'Factory or custom porting', tac:'Compensators & barrel porting not allowed in Tactical', mod:'Compensators & barrel porting not allowed in Modified' }
+        { id:'ported',name:'Ported Barrel',     sub:'Factory or custom porting', tac:'Compensators & barrel porting not allowed in Tactical', mod:'Compensators & barrel porting not allowed in Modified' }, { id:'can',   name:'Suppressor',        sub:'Threaded-barrel can — allowed in all divisions', tac:true, mod:true }
       ]},
       { id:'magazine', label:'Magazine', icon:'mag', opts:[
         { id:'std',   name:'Standard ≤ 140mm',  sub:'Staggered-column legal everywhere', tac:true, mod:true },
