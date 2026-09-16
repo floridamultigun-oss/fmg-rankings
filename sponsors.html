@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Florida Multigun State Championship Sponsors</title>
+<style>
+  :root{
+    --navy:#0E3557; --red:#C8102E; --ink:#1b2430; --muted:#5b6b7c;
+    --line:rgba(14,53,87,.14); --card:#fff; --bg:transparent;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --navy:#cfe0f0; --ink:#eaf1f8; --muted:#9db0c4;
+      --line:rgba(207,224,240,.18); --card:rgba(255,255,255,.05);
+    }
+  }
+  :root[data-theme="dark"]{
+    --navy:#cfe0f0; --ink:#eaf1f8; --muted:#9db0c4;
+    --line:rgba(207,224,240,.18); --card:rgba(255,255,255,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg)}
+  body{
+    font:400 15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    color:var(--ink); padding:4px 16px 24px;
+  }
+  .wrap{max-width:1040px;margin:0 auto}
+  .tier{margin:0 0 30px}
+  .tier h2{
+    font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--navy); margin:0 0 14px; padding-bottom:9px;
+    border-bottom:1px solid var(--line); position:relative;
+  }
+  .tier h2::after{
+    content:""; position:absolute; left:0; bottom:-1px; width:44px; height:2px; background:var(--red);
+  }
+  .grid{display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+  .card{
+    display:flex; flex-direction:column; gap:10px; text-decoration:none; color:inherit;
+    background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 14px;
+    transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  }
+  .card:hover,.card:focus-visible{
+    transform:translateY(-2px); border-color:rgba(200,16,46,.4);
+    box-shadow:0 6px 20px rgba(14,53,87,.10);
+  }
+  .card:focus-visible{outline:2px solid var(--red); outline-offset:2px}
+  .frame{
+    display:flex; align-items:center; justify-content:center;
+    height:84px; width:100%;
+  }
+  .frame img{max-width:100%; max-height:84px; width:auto; height:auto; object-fit:contain}
+  .pending{
+    font-weight:700; font-size:17px; letter-spacing:.02em; color:var(--navy); text-align:center;
+  }
+  .meta{display:flex; flex-direction:column; gap:2px; text-align:center}
+  .nm{font-size:13px; font-weight:600; color:var(--ink)}
+  .note{font-size:11.5px; color:var(--muted)}
+  .foot{
+    margin-top:26px; padding-top:14px; border-top:1px solid var(--line);
+    font-size:12.5px; color:var(--muted); text-align:center;
+  }
+  .foot a{color:var(--navy); font-weight:600; text-decoration:none}
+  .foot a:hover{text-decoration:underline}
+  @media (max-width:420px){
+    .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:11px}
+    .frame,.frame img{height:66px; max-height:66px}
+  }
+</style>
+</head><body>
+<div class="wrap">
+<section class="tier"><h2>Match Sponsors</h2><div class="grid"><a class="card" href="https://vortexoptics.com" target="_blank" rel="noopener noreferrer" aria-label="Vortex Optics"><span class="frame"><img src="logos/vortex.png" alt="Vortex Optics" loading="lazy"></span><span class="meta"><span class="nm">Vortex Optics</span><span class="note">Lead optics partner</span></span></a></div></section><section class="tier"><h2>Event Sponsors</h2><div class="grid"><a class="card" href="https://ruggedgear.com" target="_blank" rel="noopener noreferrer" aria-label="Rugged Gear"><span class="frame"><span class="pending">Rugged Gear</span></span><span class="meta"><span class="nm">Rugged Gear</span><span class="note">Hunting &amp; shooting accessories</span></span></a></div></section>
+  <p class="foot">Interested in supporting the 2027 Florida Multigun State Championship?
+  <a href="mailto:FloridaMultigun@gmail.com">FloridaMultigun@gmail.com</a></p>
+</div>
+<script>
+  function h(){
+    var d=document.documentElement, b=document.body;
+    var px=Math.max(b.scrollHeight,b.offsetHeight,d.scrollHeight,d.offsetHeight);
+    try{parent.postMessage({fmSponsorWallHeight:px},'*')}catch(e){}
+  }
+  window.addEventListener('load',h);
+  window.addEventListener('resize',h);
+  if(window.ResizeObserver){new ResizeObserver(h).observe(document.body)}
+  h();
+</script>
+</body></html>
