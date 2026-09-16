@@ -14,29 +14,67 @@
   .tier{margin:0 0 30px}
   .tier h2{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--navy);margin:0 0 14px;padding-bottom:9px;border-bottom:1px solid var(--line);position:relative}
   .tier h2::after{content:"";position:absolute;left:0;bottom:-1px;width:44px;height:2px;background:var(--red)}
-  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
   .card{display:flex;flex-direction:column;gap:10px;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 14px;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
-  .card:hover,.card:focus-visible{transform:translateY(-2px);border-color:rgba(200,16,46,.4);box-shadow:0 6px 20px rgba(14,53,87,.10)}
-  .card:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+  a.card:hover,a.card:focus-visible{transform:translateY(-2px);border-color:rgba(200,16,46,.4);box-shadow:0 6px 20px rgba(14,53,87,.10)}
+  a.card:focus-visible{outline:2px solid var(--red);outline-offset:2px}
   .frame{display:flex;align-items:center;justify-content:center;height:84px;width:100%;border-radius:6px}
   .frame img{max-width:100%;max-height:84px;width:auto;height:auto;object-fit:contain}
-  .card.onDark .frame{background:#0E3557;padding:8px 10px}
-  .pending{font-weight:700;font-size:17px;letter-spacing:.02em;color:var(--navy);text-align:center}
+  .onDark .frame{background:#0E3557;padding:8px 10px}
+  .pending{font-weight:700;font-size:17px;letter-spacing:.02em;color:var(--navy);text-align:center;line-height:1.25}
   .meta{display:flex;flex-direction:column;gap:2px;text-align:center}
   .nm{font-size:13px;font-weight:600;color:var(--ink)}
   .note{font-size:11.5px;color:var(--muted)}
   .foot{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);text-align:center}
   .foot a{color:var(--navy);font-weight:600;text-decoration:none}
   .foot a:hover{text-decoration:underline}
-  @media (max-width:420px){.grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:11px}.frame,.frame img{height:66px;max-height:66px}}
+  @media (max-width:420px){.grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:11px}.frame,.frame img{height:66px;max-height:66px}}
 </style>
 </head><body>
-<div class="wrap">
-<section class="tier"><h2>Match Sponsors</h2><div class="grid"><a class="card" href="https://vortexoptics.com" target="_blank" rel="noopener noreferrer" aria-label="Vortex Optics"><span class="frame"><img src="Vortex-Logo.png" alt="Vortex Optics" loading="lazy"></span><span class="meta"><span class="nm">Vortex Optics</span><span class="note">Lead optics partner</span></span></a></div></section>
-<section class="tier"><h2>Event Sponsors</h2><div class="grid"><a class="card onDark" href="https://ruggedgear.com" target="_blank" rel="noopener noreferrer" aria-label="Rugged Gear"><span class="frame"><img src="Rugged-Gear-Logo.png" alt="Rugged Gear" loading="lazy"></span><span class="meta"><span class="nm">Rugged Gear</span><span class="note">Hunting &amp; shooting accessories</span></span></a></div></section>
-  <p class="foot">Interested in supporting the 2027 Florida Multigun State Championship? <a href="mailto:FloridaMultigun@gmail.com">FloridaMultigun@gmail.com</a></p>
-</div>
+<div class="wrap" id="wall"></div>
+<p class="foot">Interested in supporting the 2027 Florida Multigun State Championship? <a href="mailto:FloridaMultigun@gmail.com">FloridaMultigun@gmail.com</a></p>
+
 <script>
+/* ==========================================================================
+   ADD A SPONSOR HERE. One line each. Nothing else in this file needs editing.
+     tier   Title | Match | Stage | Event | Prize Table Partner
+     name   shown under the logo
+     url    their website, or "" if you do not have one yet
+     logo   filename of the image in this repo, or "" to show the name as text
+     note   short line under the name, optional
+     onDark true only for white logos that vanish on a light background
+   ========================================================================== */
+var SPONSORS = [
+  { tier:"Match", name:"Vortex Optics",     url:"https://vortexoptics.com", logo:"Vortex-Logo.png",      note:"Lead optics partner" },
+  { tier:"Match", name:"Steele Industries", url:"https://steeleindinc.com", logo:"Steele-Logo.png",      note:"A night vision company" },
+  { tier:"Event", name:"Rugged Gear",       url:"https://ruggedgear.com",   logo:"Rugged-Gear-Logo.png", note:"Hunting and shooting accessories", onDark:true },
+  { tier:"Prize Table Partner", name:"Bloom and Branch", url:"", logo:"", note:"Custom drinkware" }
+];
+/* ========================================================================== */
+
+var TIER_ORDER = ["Title","Match","Stage","Event","Prize Table Partner"];
+var TIER_LABEL = {"Title":"Title Sponsor","Match":"Match Sponsors","Stage":"Stage Sponsors","Event":"Event Sponsors","Prize Table Partner":"Prize Table Partners"};
+
+function esc(s){ return String(s||"").replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+function card(s){
+  var inner = s.logo ? '<img src="'+esc(s.logo)+'" alt="'+esc(s.name)+'" loading="lazy">' : '<span class="pending">'+esc(s.name)+'</span>';
+  var note = s.note ? '<span class="note">'+esc(s.note)+'</span>' : '';
+  var body = '<span class="frame">'+inner+'</span><span class="meta"><span class="nm">'+esc(s.name)+'</span>'+note+'</span>';
+  var cls = 'card'+(s.onDark ? ' onDark' : '');
+  return s.url ? '<a class="'+cls+'" href="'+esc(s.url)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(s.name)+'">'+body+'</a>' : '<div class="'+cls+'">'+body+'</div>';
+}
+
+(function render(){
+  var out = "";
+  TIER_ORDER.forEach(function(t){
+    var items = SPONSORS.filter(function(s){ return s.tier === t; });
+    if(!items.length) return;
+    out += '<section class="tier"><h2>'+TIER_LABEL[t]+'</h2><div class="grid">' + items.map(card).join("") + '</div></section>';
+  });
+  document.getElementById("wall").innerHTML = out;
+})();
+
 function h(){var d=document.documentElement,b=document.body;var px=Math.max(b.scrollHeight,b.offsetHeight,d.scrollHeight,d.offsetHeight);try{parent.postMessage({fmSponsorWallHeight:px},'*')}catch(e){}}
 window.addEventListener('load',h);window.addEventListener('resize',h);
 if(window.ResizeObserver){new ResizeObserver(h).observe(document.body)}h();
