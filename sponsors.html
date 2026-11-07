@@ -45,32 +45,11 @@
      onDark true only for white logos that vanish on a light background
    ========================================================================== */
 var SPONSORS = [
-  { tier:"Title", name:"Kel-Tec", url:"https://www.keltecweapons.com", logo:"keltec.png", note:"Title sponsor, third year", onDark:true },
-
-  { tier:"Match", name:"SIG Sauer", url:"https://www.sigsauer.com", logo:"", note:"Pistol and optics" },
-  { tier:"Match", name:"Vortex Optics", url:"https://vortexoptics.com", logo:"vortex.png", note:"Lead optics partner", onDark:true },
-  { tier:"Match", name:"Steele Industries", url:"https://steeleindinc.com", logo:"steele.png", note:"A night vision company", onDark:true },
-
-  { tier:"Stage", name:"Hodgdon Powder", url:"https://hodgdonpowderco.com", logo:"hodgdon.png", note:"Propellant", onDark:true },
-  { tier:"Stage", name:"Hunters HD Gold", url:"https://huntershdgold.com", logo:"huntershdgold.png", note:"Performance eyewear", onDark:true },
-  { tier:"Stage", name:"Modlite Systems", url:"https://modlite.com", logo:"", note:"Weapon lights and handhelds" },
-
-  { tier:"Event", name:"Rugged Gear", url:"https://ruggedgear.com", logo:"ruggedgear.png", note:"Hunting and shooting accessories", onDark:true },
-  { tier:"Event", name:"PACT", url:"https://pact.com", logo:"pact.png", note:"Timers and chronographs", onDark:true },
-  { tier:"Event", name:"ESS Eyewear", url:"https://esseyepro.com", logo:"", note:"Eye protection" },
-  { tier:"Event", name:"Ballistol", url:"https://ballistol.com", logo:"", note:"Cleaning and lubrication" },
-  { tier:"Event", name:"Discovery Optics", url:"https://www.discoveryopt.com", logo:"", note:"Optics" },
-
-  { tier:"Prize Table Partner", name:"Redding Reloading", url:"https://redding-reloading.com", logo:"redding.png", note:"Reloading equipment", onDark:true },
-  { tier:"Prize Table Partner", name:"RCBS", url:"https://rcbs.com", logo:"rcbs.png", note:"Reloading equipment", onDark:true },
-  { tier:"Prize Table Partner", name:"The Team Room", url:"", logo:"teamroom.png", note:"Sarasota", onDark:true },
-  { tier:"Prize Table Partner", name:"Bloom and Branch", url:"", logo:"", note:"Custom drinkware" },
-  { tier:"Prize Table Partner", name:"Farewell Firearms", url:"https://farewellfirearms.com", logo:"", note:"Dryfire Crew" },
-  { tier:"Prize Table Partner", name:"Savior Equipment", url:"https://www.saviorequipment.com", logo:"", note:"Range bags and cases" },
-  { tier:"Prize Table Partner", name:"Mantis", url:"https://mantisx.com", logo:"", note:"Shot analysis and dry fire" },
-  { tier:"Prize Table Partner", name:"Precision Armament", url:"https://precisionarmament.com", logo:"", note:"Muzzle devices and tools" },
-  { tier:"Prize Table Partner", name:"Groove Life", url:"https://groovelife.com", logo:"", note:"Rings, belts and gear" },
-  { tier:"Prize Table Partner", name:"BOAZ Ammo", url:"", logo:"", note:"Ammunition" }
+  { tier:"Title", name:"KelTec",            url:"https://www.keltecweapons.com", logo:"KelTec-Logo.png", note:"Title sponsor, third year running" },
+  { tier:"Match", name:"Vortex Optics",     url:"https://vortexoptics.com", logo:"Vortex-Logo.png",      note:"Lead optics partner" },
+  { tier:"Match", name:"Steele Industries", url:"https://steeleindinc.com", logo:"Steele-Logo.png",      note:"A night vision company" },
+  { tier:"Event", name:"Rugged Gear",       url:"https://ruggedgear.com",   logo:"Rugged-Gear-Logo.png", note:"Hunting and shooting accessories", onDark:true },
+  { tier:"Prize Table Partner", name:"Bloom and Branch", url:"", logo:"", note:"Custom drinkware" }
 ];
 /* ========================================================================== */
 
@@ -80,7 +59,7 @@ var TIER_LABEL = {"Title":"Title Sponsor","Match":"Match Sponsors","Stage":"Stag
 function esc(s){ return String(s||"").replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
 function card(s){
-  var inner = s.logo ? '<img src="'+esc(s.logo)+'" alt="'+esc(s.name)+'" loading="lazy">' : '<span class="pending">'+esc(s.name)+'</span>';
+  var inner = s.logo ? '<img src="'+esc(s.logo)+'" alt="'+esc(s.name)+'" loading="lazy" onerror="var c=this.closest(\'.card\');if(c)c.classList.remove(\'onDark\');this.outerHTML=\'<span class=&quot;pending&quot;>\'+this.alt+\'</span>\'">' : '<span class="pending">'+esc(s.name)+'</span>';
   var note = s.note ? '<span class="note">'+esc(s.note)+'</span>' : '';
   var body = '<span class="frame">'+inner+'</span><span class="meta"><span class="nm">'+esc(s.name)+'</span>'+note+'</span>';
   var cls = 'card'+(s.onDark ? ' onDark' : '');
@@ -97,7 +76,7 @@ function card(s){
   document.getElementById("wall").innerHTML = out;
 })();
 
-function h(){var d=document.documentElement,b=document.body;var px=Math.max(b.scrollHeight,b.offsetHeight,d.scrollHeight,d.offsetHeight);try{parent.postMessage({fmSponsorWallHeight:px},'*')}catch(e){}}
+function h(){var f=document.querySelector('.foot');var r=f?f.getBoundingClientRect():document.getElementById('wall').getBoundingClientRect();var px=Math.ceil(r.bottom+window.scrollY+24);try{parent.postMessage({fmSponsorWallHeight:px},'*')}catch(e){}}
 window.addEventListener('load',h);window.addEventListener('resize',h);
 if(window.ResizeObserver){new ResizeObserver(h).observe(document.body)}h();
 </script>
